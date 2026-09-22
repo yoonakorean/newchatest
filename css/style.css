@@ -1,0 +1,24 @@
+/* 全域微調 */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #f8f9fa;
+}
+
+/* 登入 Modal 按鈕動畫效果 */
+#googleAuthBtn:hover {
+  background-color: #f1f3f4;
+  border-color: #dadce0;
+}
+
+/* 輸入框 Focus 質感 */
+.form-floating .form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+/* 權限 Badge 樣式調整 */
+.badge {
+  font-size: 0.85rem;
+  padding: 0.5em 0.8em;
+  font-weight: 500;
+}
