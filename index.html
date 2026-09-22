@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>多語種韓語學習系統</title>
+  <title>多語種學習系統</title>
   <style>
     :root {
       --primary-color: #58cc02;
@@ -22,7 +22,6 @@
       padding: 0;
     }
 
-    /* 頂部與側邊欄 Layout */
     .app-header {
       background: white;
       border-bottom: 2px solid var(--border-color);
@@ -44,7 +43,6 @@
       flex: 1;
     }
 
-    /* 程度選擇器 */
     .level-selector {
       display: flex;
       gap: 8px;
@@ -53,7 +51,6 @@
       padding-bottom: 8px;
     }
 
-    /* 3D 按鈕與卡片風格 */
     .btn-3d {
       border: none;
       border-radius: 12px;
@@ -79,12 +76,6 @@
       box-shadow: 0 3px 0 #1899d6;
     }
 
-    .btn-primary {
-      background-color: var(--primary-color);
-      color: white;
-      box-shadow: 0 3px 0 #46a302;
-    }
-
     .btn-3d:active {
       transform: translateY(3px);
       box-shadow: 0 0 0 transparent !important;
@@ -107,7 +98,7 @@
       display: block;
     }
 
-    /* 挑戰賽表格樣式 */
+    /* 挑戰賽表格通用樣式 */
     .styled-table {
       width: 100%;
       border-collapse: collapse;
@@ -125,10 +116,6 @@
       color: #555;
     }
 
-    .gold { background-color: #fff9db; }
-    .silver { background-color: #f1f3f5; }
-    .bronze { background-color: #fff0f6; }
-
     .btn-link {
       color: var(--secondary-color);
       font-weight: bold;
@@ -142,7 +129,6 @@
 </head>
 <body>
 
-  <!-- 頂部導覽列 (保留 Firebase 身分識別) -->
   <header class="app-header">
     <h2 style="margin:0; color: var(--primary-color);">Duolingo 風格韓語學習系統</h2>
     <div id="auth-status">
@@ -153,7 +139,7 @@
   <div class="app-container">
     <main class="main-content">
 
-      <!-- 程度切換選單 (保留 0A ~ 4A/TOPIK 分級) -->
+      <!-- 程度切換選單 -->
       <div class="level-selector">
         <button class="btn-3d btn-level" onclick="switchLevel('0A')">0A 基礎</button>
         <button class="btn-3d btn-level active" onclick="switchLevel('1A')">1A 初級</button>
@@ -162,7 +148,7 @@
         <button class="btn-3d btn-level" onclick="switchLevel('2B')">2B 中級</button>
       </div>
 
-      <!-- ================= 0A 程度頁面 ================= -->
+      <!-- 0A 程度頁面 -->
       <div id="level-view-0A" class="level-view">
         <div class="card-3d">
           <h3>📚 0A 韓語字母與基礎發音</h3>
@@ -170,36 +156,28 @@
         </div>
       </div>
 
-      <!-- ================= 1A 程度頁面 (嵌入挑戰賽) ================= -->
+      <!-- 1A 程度頁面 -->
       <div id="level-view-1A" class="level-view active">
-        <!-- 原有的 1A 地圖關卡區塊 -->
         <div class="card-3d">
           <h3>📚 1A 課程學習地圖</h3>
-          <p>完成基礎語法與句型關卡，並參與下方的極限挑戰賽！</p>
+          <p>完成基礎語法與句型關卡。</p>
         </div>
 
-        <!-- 🏆 1A 專屬：韓語句子極限挑戰賽區塊 -->
-        <div id="challenge-card-1A" class="card-3d" style="border: 2px solid #1cb0f6;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 style="margin: 0; color: #1cb0f6; display: flex; align-items: center; gap: 8px;">
-              <span>🏆</span> 1A 韓語句子極限挑戰賽
-            </h3>
-            <button class="btn-3d btn-primary" style="padding: 6px 12px; font-size: 13px;" onclick="refreshCurrentChallenge('1A')">
-              🔄 刷新成績
-            </button>
-          </div>
-
-          <!-- 1A 排行榜 -->
-          <div style="margin-bottom: 24px;">
-            <h4 style="margin: 8px 0; color: #555;">🥇 1A 挑戰賽排行榜前三名</h4>
+        <!-- 🏆 1A 極限挑戰賽 (HTML 排版容器) -->
+        <div class="card-3d" style="border: 2px solid #1cb0f6;">
+          <h3 style="color: #1cb0f6; margin-top: 0;">🏆 1A 韓語句子極限挑戰賽</h3>
+          
+          <!-- 排行榜容器 -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="margin: 8px 0; color: #555;">🥇 挑戰賽排行榜前三名</h4>
             <div id="leaderboard-1A">
               <p style="color: gray; text-align: center;">載入排行榜中...</p>
             </div>
           </div>
 
-          <!-- 1A 17個單元挑戰列表 -->
+          <!-- 關卡與成績表格容器 -->
           <div>
-            <h4 style="margin: 8px 0; color: #555;">📚 1A 17 單元挑戰關卡 (SS跟讀 / SF填空 / ST聽打)</h4>
+            <h4 style="margin: 8px 0; color: #555;">📚 17 單元挑戰關卡 (SS跟讀 / SF填空 / ST聽打)</h4>
             <div id="units-table-1A" style="overflow-x: auto;">
               <p style="color: gray; text-align: center;">載入關卡中...</p>
             </div>
@@ -207,22 +185,15 @@
         </div>
       </div>
 
-      <!-- ================= 1B 程度頁面 (預留未來擴充) ================= -->
+      <!-- 1B 程度頁面 -->
       <div id="level-view-1B" class="level-view">
         <div class="card-3d">
           <h3>📚 1B 課程學習地圖</h3>
           <p>1B 課程關卡內容。</p>
         </div>
-
-        <!-- 未來填入 1B 挑戰賽時解鎖此區塊 -->
-        <div id="challenge-card-1B" class="card-3d">
-          <h3>🏆 1B 韓語句子極限挑戰賽</h3>
-          <div id="leaderboard-1B"><p style="color:gray;">準備中...</p></div>
-          <div id="units-table-1B"><p style="color:gray;">準備中...</p></div>
-        </div>
       </div>
 
-      <!-- ================= 2A 程度頁面 ================= -->
+      <!-- 2A 程度頁面 -->
       <div id="level-view-2A" class="level-view">
         <div class="card-3d">
           <h3>📚 2A 課程學習地圖</h3>
@@ -230,7 +201,7 @@
         </div>
       </div>
 
-      <!-- ================= 2B 程度頁面 ================= -->
+      <!-- 2B 程度頁面 -->
       <div id="level-view-2B" class="level-view">
         <div class="card-3d">
           <h3>📚 2B 課程學習地圖</h3>
