@@ -1,345 +1,447 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8" />
-<title>歡迎參加挑戰賽</title>
-<meta property="og:title" content="歡迎參加挑戰賽">
-<meta property="og:description" content="歡迎參加挑戰賽">
-<meta property="og:image" content="https://yoonakorean.github.io/logo.png">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://yoonakorean.github.io/challenge-home/">
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<style>
-  body {
-    font-family: sans-serif;
-    max-width: 800px;
-    margin: 30px auto;
-    text-align: center;
-    padding: 0 10px;
-  }
-  #logo {
-    width: 150px;
-    max-width: 80%;
-    margin-bottom: 10px;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  input, button, select {
-    padding: 10px;
-    font-size: 16px;
-    width: 80%;
-    max-width: 400px;
-    margin: 10px auto;
-    display: block;
-    text-align: center;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    box-sizing: border-box;
-  }
-  button {
-    background-color: #1cb0f6;
-    color: white;
-    border: none;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  button:hover {
-    background-color: #1493cf;
-  }
-  .level-selector-container {
-    margin: 15px auto;
-    max-width: 400px;
-  }
-  #leaderboard, #result {
-    margin-top: 20px;
-    text-align: center;
-  }
-  table {
-    margin: 0 auto;
-    border-collapse: collapse;
-    width: 100%;
-    max-width: 780px;
-  }
-  th, td {
-    border: 1px solid #ccc;
-    padding: 8px 10px;
-    text-align: center;
-    vertical-align: middle;
-  }
-  th { background-color: #f2f2f2; }
-  .pass { color: green; font-weight: bold; }
-  .not-tested { color: gray; font-style: italic; }
-  .locked { color: gray; font-style: italic; pointer-events: none; cursor: default; }
-  a { text-decoration: none; color: inherit; }
-  a:hover { text-decoration: underline; }
-  .gold { background-color: #fff7c2; }
-  .silver { background-color: #ffffff; }
-  .bronze { background-color: #ffffff; }
-  .self-row { background-color: #cce5ff; }
-  td.medal { font-size: 32px; }
-  @media (max-width: 600px) {
-    input, button, select { width: 95%; }
-    table, th, td { font-size: 14px; }
-    #logo { width: 120px; }
-    td.medal { font-size: 24px; }
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>韓語學習主控台與 1A 句子挑戰賽</title>
+  <!-- FontAwesome 圖示庫 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary-color: #4caf50;
+      --primary-dark: #388e3c;
+      --secondary-color: #2196f3;
+      --bg-color: #f4f6f8;
+      --card-bg: #ffffff;
+      --text-color: #333333;
+      --border-color: #e0e0e0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; }
+
+    /* 頂部使用者資訊 Bar */
+    .user-meta-bar {
+      background-color: var(--card-bg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .user-profile { display: flex; align-items: center; gap: 10px; font-weight: bold; }
+    .stats-container { display: flex; gap: 20px; align-items: center; }
+    .stat-item { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 15px; }
+    .stat-item i { font-size: 18px; }
+    .fa-fire { color: #ff5722; }
+    .fa-bolt { color: #ffeb3b; }
+    .fa-star { color: #ffc107; }
+
+    .btn { padding: 8px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; }
+    .btn-primary { background-color: var(--primary-color); color: white; }
+    .btn-primary:hover { background-color: var(--primary-dark); }
+    .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: #555; }
+    .btn-outline:hover { background-color: #eee; }
+
+    /* 主要容器與 View 系統 */
+    .main-container { max-width: 1000px; margin: 24px auto; padding: 0 16px; }
+    .view-section { background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+    /* 導覽列 */
+    .nav-tabs { display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; }
+    .tab-btn { padding: 8px 16px; border: none; background: none; font-size: 16px; font-weight: 600; color: #666; cursor: pointer; border-radius: 6px; }
+    .tab-btn.active { color: var(--primary-color); background-color: #e8f5e9; }
+
+    /* 挑戰賽表格樣式 */
+    .challenge-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .challenge-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .challenge-table th, .challenge-table td { border: 1px solid var(--border-color); padding: 12px; text-align: center; }
+    .challenge-table th { background-color: #f8f9fa; font-weight: bold; color: #555; }
+    
+    .challenge-link { color: var(--secondary-color); text-decoration: none; font-weight: bold; }
+    .challenge-link:hover { text-decoration: underline; }
+    .challenge-link-dark { color: #333; text-decoration: none; font-weight: bold; }
+    
+    .pass-tag { color: #2e7d32; font-weight: bold; font-size: 14px; }
+    .score-tag { color: #d32f2f; font-weight: bold; font-size: 14px; }
+    .sub-text { color: #757575; font-size: 13px; }
+    .not-tested { background-color: #fafafa; }
+    .locked-cell { background-color: #f5f5f5; color: #9e9e9e; font-size: 13px; }
+    .lock-text { color: #e65100; font-weight: 500; }
+
+    /* Modal 彈出視窗 */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    .modal-card { background: white; border-radius: 12px; width: 100%; max-width: 400px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; }
+    .form-group input { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; }
+  </style>
 </head>
 <body>
-  <img src="https://yoonakorean.github.io/logo.png" alt="Logo" id="logo" />
-  <h1>歡迎參加挑戰賽</h1>
-  
-  <!-- 程度切換選單 (預留未來擴充 1B, 2A, 2B...) -->
-  <div class="level-selector-container">
-    <label for="levelSelect" style="font-weight: bold; color: #555;">選擇課程程度：</label>
-    <select id="levelSelect" onchange="onLevelChange()">
-      <option value="1A" selected>1A 程度 (11-1 至 11-26)</option>
-      <!-- 未來可在此處直接新增選項，例如：
-      <option value="1B">1B 程度 (12-1 至 12-20)</option>
-      <option value="2A">2A 程度</option>
-      -->
-    </select>
+
+  <!-- 1. 頂部會員資訊與數據列 -->
+  <div class="user-meta-bar">
+    <div class="user-profile">
+      <i class="fa-solid fa-circle-user fa-2x" style="color:#888;"></i>
+      <span id="lbl-nickname">訪客</span>
+    </div>
+    <div class="stats-container">
+      <div class="stat-item" title="連續簽到天數">
+        <i class="fa-solid fa-fire"></i>
+        <span id="lbl-streak">0</span> 天
+      </div>
+      <div class="stat-item" title="能量">
+        <i class="fa-solid fa-bolt"></i>
+        <span id="lbl-energy">100</span>
+      </div>
+      <div class="stat-item" title="經驗值">
+        <i class="fa-solid fa-star"></i>
+        <span id="lbl-xp">0</span> XP
+      </div>
+      <button id="btn-auth-action" class="btn btn-primary" onclick="openLoginModal()">登入 / 註冊</button>
+    </div>
   </div>
 
-  <input id="nicknameInput" type="text" placeholder="請輸入您的姓名" />
-  <button onclick="queryScores()">查詢成績</button>
+  <!-- 2. 主要內容區域 -->
+  <div class="main-container">
+    <!-- 主頁面選單頁籤 -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchView('map-view')">🗺️ 學習地圖</button>
+      <button class="tab-btn" onclick="open1AChallengeView()">🏆 1A 句子挑戰賽</button>
+    </div>
 
-  <!-- 排行榜 -->
-  <div id="leaderboard"></div>
+    <!-- 檢視區 1：預設學習地圖視圖 -->
+    <div id="map-view" class="view-section">
+      <h2>韓國語學習地圖</h2>
+      <p style="margin-top: 10px; color: #666;">歡迎回來！請選擇上方頁籤開始進行 1A 程度句子挑戰賽，或是繼續原本的單元學習。</p>
+    </div>
 
-  <!-- 單元表 + 查詢結果 -->
-  <div id="result"></div>
+    <!-- 檢視區 2：1A 句子挑戰賽視圖 -->
+    <div id="challenge-1a-view" class="view-section" style="display: none;">
+      <div class="challenge-header">
+        <h2>🏆 1A 程度 句子挑戰賽</h2>
+        <span id="lbl-challenge-user-status" class="sub-text"></span>
+      </div>
 
-<script>
-// ==========================================
-// 1. 課程資料庫結構 (自動化與模組化管理)
-// ==========================================
+      <div id="challenge-loading" style="display: none; color: #ef6c00; font-weight: bold; margin-bottom: 12px;">
+        ⏳ 正在同步試算表成績中...
+      </div>
 
-// 通用單元自動生成器：產生指定 Prefix (如 11) 與 數量 (如 26) 的單元
-function generateUnits(prefix, totalUnits) {
-  const units = [];
-  for (let i = 1; i <= totalUnits; i++) {
-    const numStr = i < 10 ? '0' + i : i;
-    units.push({
-      ssDisplay: `${i}-1 句子跟讀挑戰`,
-      sfDisplay: `${i}-1 句子填空挑戰`,
-      stDisplay: `${i}-1 句子聽打挑戰`,
-      ssUnit: `${prefix}-${i}-1 句子跟讀挑戰`,
-      sfUnit: `${prefix}-${i}-1 句子填空挑戰`,
-      stUnit: `${prefix}-${i}-1 句子聽打挑戰`,
-      ssLink: `https://yoonakorean.github.io/${prefix}${numStr}01SS/`,
-      sfLink: `https://yoonakorean.github.io/${prefix}${numStr}01SF/`,
-      stLink: `https://yoonakorean.github.io/${prefix}${numStr}01ST/`
+      <div id="challenge-table-container">
+        <!-- 挑戰賽表格將由此動態生成 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 登入 / 註冊彈出視窗 -->
+  <div id="login-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <h3 style="margin-bottom: 16px;">會員登入 / 註冊</h3>
+      <div class="form-group">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" placeholder="example@email.com">
+      </div>
+      <div class="form-group">
+        <label for="login-password">密碼</label>
+        <input type="password" id="login-password" placeholder="請輸入密碼">
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+        <button class="btn btn-outline" onclick="closeLoginModal()">取消</button>
+        <button class="btn btn-primary" onclick="handleAuthSubmit()">登入 / 註冊</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase 相關 SDK (Compat 版本) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // ==================== 1. FIREBASE 初始化設定 ====================
+    // 請填入您原本 Firebase 專案的 config 設定
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // 初始化 Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // 狀態變數
+    let currentUserProfile = null;
+
+    // ==================== 2. SHEETBEST API & 挑戰賽資料庫設定 ====================
+    const SHEETBEST_API_URL = "https://api.sheetbest.com/sheets/6609511a-f588-4e4f-bd2b-ed551cab8770";
+
+    // 建立 1A 程度 17 個單元的清單資料
+    const challengeUnits1A = [];
+    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17].forEach(i => {
+      const numStr = i < 10 ? '0' + i : i;
+      challengeUnits1A.push({
+        ssDisplay: `${i}-1 句子跟讀挑戰`,
+        sfDisplay: `${i}-1 句子填空挑戰`,
+        stDisplay: `${i}-1 句子聽打挑戰`,
+        ssUnit: `11-${i}-1 句子跟讀挑戰`,
+        sfUnit: `11-${i}-1 句子填空挑戰`,
+        stUnit: `11-${i}-1 句子聽打挑戰`,
+        ssLink: `https://yoonakorean.github.io/11${numStr}01SS/`,
+        sfLink: `https://yoonakorean.github.io/11${numStr}01SF/`,
+        stLink: `https://yoonakorean.github.io/11${numStr}01ST/`
+      });
     });
-  }
-  return units;
-}
 
-// 程度庫對照表 (未來要新增 1B, 2A... 只需要在下方新增即可)
-const courseDatabase = {
-  "1A": generateUnits(11, 26) // 1A 包含 11-01-1 到 11-26-1
-  
-  // 未來新增範例：
-  // "1B": generateUnits(12, 20), // 12-01-1 到 12-20-1
-  // "2A": generateUnits(21, 20)
-};
-
-// 當前選擇的程度與使用者紀錄暫存
-let currentLevel = "1A";
-let cachedUserData = null;
-
-// 取得當前程度對應的單元清單
-function getCurrentUnits() {
-  return courseDatabase[currentLevel] || [];
-}
-
-// ==========================================
-// 2. 初始與 UI 渲染邏輯
-// ==========================================
-
-// 初始渲染無分數的單元表
-function renderInitialTable() {
-  const allUnitsGrouped = getCurrentUnits();
-  let html = `<h2>【${currentLevel}】單元列表</h2><table><thead><tr>
-    <th>句子跟讀挑戰</th><th>句子填空挑戰</th><th>句子聽打挑戰</th>
-  </tr></thead><tbody>`;
-  
-  allUnitsGrouped.forEach(row => {
-    html += "<tr>";
-    html += `<td><a href="${row.ssLink}" target="_blank">${row.ssDisplay}</a></td>`;
-    html += `<td class="not-tested"><a href="${row.sfLink}" target="_blank" style="color:black;">${row.sfDisplay}</a><br>尚未挑戰</td>`;
-    html += `<td class="locked">${row.stDisplay}<br>需先完成填空挑戰</td>`;
-    html += "</tr>";
-  });
-  
-  html += "</tbody></table>";
-  document.getElementById("result").innerHTML = html;
-}
-
-// 切換程度時發動
-function onLevelChange() {
-  currentLevel = document.getElementById("levelSelect").value;
-  if (cachedUserData) {
-    renderUserScores(cachedUserData);
-  } else {
-    renderInitialTable();
-  }
-}
-
-// ==========================================
-// 3. 排行榜邏輯
-// ==========================================
-function maskName(name){
-  if(!name) return "";
-  if(name.length<2) return name;
-  return name[0]+"O"+name.slice(2);
-}
-
-function parseTime(timeStr){ 
-  if(!timeStr) return 0; 
-  const match = timeStr.match(/(\d+)/);
-  return match?Number(match[1]):0;
-}
-
-function formatTime(seconds){
-  const m = Math.floor(seconds/60);
-  const s = seconds%60;
-  return `${m}:${s.toString().padStart(2,'0')}`;
-}
-
-function renderLeaderboard(leaderboard, userData=null, userIndex=-1){
-  let html=`<h2>排行榜前三名</h2><table><thead><tr>
-    <th>名次</th><th>姓名</th><th>通關數</th><th>總分</th><th>平均時間</th>
-  </tr></thead><tbody>`;
-  const medals=["🥇","🥈","🥉"];
-  const medalClasses=["gold","silver","bronze"];
-  
-  leaderboard.slice(0,3).forEach((u,i)=>{
-    const displayName = userData && u.name===userData.name ? u.name : maskName(u.name);
-    html+=`<tr class="${medalClasses[i]}"><td class="medal">${medals[i]}</td><td>${displayName}</td><td>${u.passCount}</td><td>${u.totalScore}</td><td>${formatTime(Math.round(u.avgTime))}</td></tr>`;
-  });
-  
-  if(userData){
-    html+=`<tr class="self-row"><td class="medal">${userIndex+1}</td><td>${userData.name}</td><td>${userData.passCount}</td><td>${userData.totalScore}</td><td>${formatTime(Math.round(userData.avgTime))}</td></tr>`;
-  }else{
-    html+=`<tr class="self-row"><td colspan="5">（此處顯示查詢使用者成績）</td></tr>`;
-  }
-  
-  html+="</tbody></table>";
-  document.getElementById("leaderboard").innerHTML = html;
-}
-
-async function loadLeaderboard(nickname=""){
-  const resultDiv = document.getElementById("result");
-  try{
-    const apiUrl="https://api.sheetbest.com/sheets/6609511a-f588-4e4f-bd2b-ed551cab8770";
-    const res = await fetch(apiUrl);
-    const data = await res.json();
-    const userBest={};
-    
-    data.forEach(r=>{
-      if(!r.nickname) return;
-      const unit=(r.gametitle||"").trim();
-      if(!/^\d+-\d+-1/.test(unit)) return; // 符合數字-數字-1 格式
-      
-      let score = Number(r.score);
-      let time = parseTime(r.time);
-      if(isNaN(score)) score=0;
-      
-      if(!userBest[r.nickname]) userBest[r.nickname]={};
-      if(!userBest[r.nickname][unit] || score>userBest[r.nickname][unit].score){
-        userBest[r.nickname][unit]={score,time};
+    // ==================== 3. 認證與連續登入 (STREAK) 邏輯 ====================
+    auth.onAuthStateChanged(async (user) => {
+      const authBtn = document.getElementById("btn-auth-action");
+      if (user) {
+        authBtn.textContent = "登出";
+        authBtn.onclick = handleLogout;
+        await syncUserProfile(user);
+      } else {
+        authBtn.textContent = "登入 / 註冊";
+        authBtn.onclick = openLoginModal;
+        resetGuestProfile();
       }
     });
-    
-    const leaderboard=Object.entries(userBest).map(([name,units])=>{
-      const passed=Object.values(units).filter(u=>u.score>=80);
-      const passCount=passed.length;
-      const totalScore=passed.reduce((a,b)=>a+b.score,0);
-      const totalTime=Object.values(units).reduce((a,b)=>a+b.time,0);
-      const challengeCount=Object.keys(units).length;
-      const avgTime=challengeCount?totalTime/challengeCount:0;
-      return {name,passCount,totalScore,avgTime,units};
-    });
-    
-    leaderboard.sort((a,b)=>{
-      if(b.passCount!==a.passCount) return b.passCount-a.passCount;
-      if(b.totalScore!==a.totalScore) return b.totalScore-a.totalScore;
-      return a.avgTime-b.avgTime;
-    });
-    
-    let userData=null, userIndex=-1;
-    if(nickname){
-      userIndex=leaderboard.findIndex(u=>u.name.toLowerCase()===nickname.toLowerCase());
-      userData=userIndex>=0?leaderboard[userIndex]:null;
-    }
-    
-    cachedUserData = userData; // 寫入暫存
-    renderLeaderboard(leaderboard,userData,userIndex);
-    renderUserScores(userData);
-  }catch(err){
-    console.error(err);
-    resultDiv.innerHTML = `<p style="color:red;">發生錯誤，請稍後再試。</p>`;
-  }
-}
 
-// ==========================================
-// 4. 使用者查詢與合格解鎖判定
-// ==========================================
-function renderUserScores(userData){
-  const allUnitsGrouped = getCurrentUnits();
-  let html = `<h2>【${currentLevel}】單元列表</h2><table><thead><tr>
-    <th>句子跟讀挑戰</th><th>句子填空挑戰</th><th>句子聽打挑戰</th>
-  </tr></thead><tbody>`;
-  
-  allUnitsGrouped.forEach(row => {
-    const ssScore = userData?.units[row.ssUnit]?.score || 0;
-    const sfScore = userData?.units[row.sfUnit]?.score || 0;
-    const stScore = userData?.units[row.stUnit]?.score || 0;
-    
-    html += "<tr>";
-    
-    // 1. 跟讀挑戰 (永遠開放)
-    html += `<td><a href="${row.ssLink}" target="_blank">${row.ssDisplay}</a></td>`;
-    
-    // 2. 填空挑戰 (SF)
-    if(sfScore > 0){
-      html += `<td><a href="${row.sfLink}" target="_blank" style="color:black;">${row.sfDisplay}</a><br>
-               <span class="${sfScore>=80?'pass':''}">${sfScore} 分${sfScore>=80?' ✅合格':''}</span></td>`;
-    }else{
-      html += `<td class="not-tested"><a href="${row.sfLink}" target="_blank" style="color:black;">${row.sfDisplay}</a><br>尚未挑戰</td>`;
+    /**
+     * 同步會員資料與計算簽到天數 (Streak)
+     */
+    async function syncUserProfile(user) {
+      const userRef = db.collection("Members").doc(user.uid);
+      const doc = await userRef.get();
+
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      if (!doc.exists()) {
+        // 新增預設會員紀錄
+        currentUserProfile = {
+          nickname: user.email.split('@')[0],
+          email: user.email,
+          streak: 1,
+          energy: 100,
+          xp: 0,
+          lastLoginDate: todayStr
+        };
+        await userRef.set(currentUserProfile);
+      } else {
+        currentUserProfile = doc.data();
+        
+        // 防呆並計算連續登入邏輯
+        const lastLogin = currentUserProfile.lastLoginDate;
+        if (lastLogin !== todayStr) {
+          const diffDays = Math.floor((new Date(todayStr) - new Date(lastLogin)) / (1000 * 60 * 60 * 24));
+          if (diffDays === 1) {
+            currentUserProfile.streak += 1; // 連續登入
+          } else if (diffDays > 1) {
+            currentUserProfile.streak = 1;  // 中斷重算
+          }
+          currentUserProfile.lastLoginDate = todayStr;
+          await userRef.update({
+            streak: currentUserProfile.streak,
+            lastLoginDate: todayStr
+          });
+        }
+      }
+
+      updateUIHeader();
     }
-    
-    // 3. 聽打挑戰 (ST - 需填空 > 0 分才解鎖)
-    if(sfScore <= 0){
-      html += `<td class="locked">${row.stDisplay}<br>需先完成填空挑戰</td>`;
-    }else{
-      if(stScore > 0){
-        html += `<td><a href="${row.stLink}" target="_blank" style="color:black;">${row.stDisplay}</a><br>
-                 <span class="${stScore>=80?'pass':''}">${stScore} 分${stScore>=80?' ✅合格':''}</span></td>`;
-      }else{
-        html += `<td class="not-tested"><a href="${row.stLink}" target="_blank" style="color:black;">${row.stDisplay}</a><br>尚未挑戰</td>`;
+
+    function resetGuestProfile() {
+      currentUserProfile = { nickname: "訪客", streak: 0, energy: 100, xp: 0 };
+      updateUIHeader();
+    }
+
+    function updateUIHeader() {
+      document.getElementById("lbl-nickname").textContent = currentUserProfile.nickname;
+      document.getElementById("lbl-streak").textContent = currentUserProfile.streak;
+      document.getElementById("lbl-energy").textContent = currentUserProfile.energy;
+      document.getElementById("lbl-xp").textContent = currentUserProfile.xp;
+    }
+
+    // ==================== 4. 挑戰賽渲染與 80 分解鎖邏輯 ====================
+    function open1AChallengeView() {
+      switchView('challenge-1a-view');
+      loadAndRender1AChallengeView();
+    }
+
+    async function loadAndRender1AChallengeView() {
+      const loadingEl = document.getElementById("challenge-loading");
+      const container = document.getElementById("challenge-table-container");
+      const statusEl = document.getElementById("lbl-challenge-user-status");
+
+      loadingEl.style.display = "block";
+      
+      const currentUser = auth.currentUser;
+      const userEmail = currentUser ? currentUser.email : null;
+      
+      statusEl.textContent = userEmail ? `帳號：${userEmail}` : "提示：未登入狀態下顯示預設表格";
+
+      let userData = { units: {} };
+
+      if (userEmail) {
+        try {
+          // 向 SheetBest API 抓取試算表資料
+          const response = await fetch(SHEETBEST_API_URL);
+          const data = await response.json();
+
+          // 過濾出目前登入使用者的成績列
+          const userRows = data.filter(row => row.email && row.email.toLowerCase() === userEmail.toLowerCase());
+          
+          userRows.forEach(row => {
+            if (row.unit) {
+              userData.units[row.unit] = {
+                score: Number(row.score) || 0
+              };
+            }
+          });
+        } catch (error) {
+          console.error("無法取得 SheetBest 挑戰賽資料：", error);
+        }
+      }
+
+      loadingEl.style.display = "none";
+      render1AChallengeTable(userData, container);
+    }
+
+    function render1AChallengeTable(userData, containerEl) {
+      let html = `
+        <table class="challenge-table">
+          <thead>
+            <tr>
+              <th>句子跟讀挑戰</th>
+              <th>句子填空挑戰</th>
+              <th>句子聽打挑戰</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+      challengeUnits1A.forEach(row => {
+        const ssScore = Number(userData?.units?.[row.ssUnit]?.score) || 0;
+        const sfScore = Number(userData?.units?.[row.sfUnit]?.score) || 0;
+        const stScore = Number(userData?.units?.[row.stUnit]?.score) || 0;
+
+        html += "<tr>";
+
+        // 1. 跟讀挑戰 (全開放)
+        html += `<td><a href="${row.ssLink}" target="_blank" class="challenge-link">${row.ssDisplay}</a></td>`;
+
+        // 2. 填空挑戰
+        if (sfScore > 0) {
+          html += `<td>
+            <a href="${row.sfLink}" target="_blank" class="challenge-link-dark">${row.sfDisplay}</a><br>
+            <span class="${sfScore >= 80 ? 'pass-tag' : 'score-tag'}">${sfScore} 分${sfScore >= 80 ? ' ✅合格' : ''}</span>
+          </td>`;
+        } else {
+          html += `<td class="not-tested">
+            <a href="${row.sfLink}" target="_blank" class="challenge-link-dark">${row.sfDisplay}</a><br>
+            <span class="sub-text">尚未挑戰</span>
+          </td>`;
+        }
+
+        // 3. 聽打挑戰 (關鍵條件：填空挑戰須滿 80 分才可解鎖)
+        if (sfScore < 80) {
+          html += `<td class="locked-cell">
+            ${row.stDisplay}<br>
+            <span class="lock-text">🔒 填空滿 80 分解鎖</span>
+          </td>`;
+        } else {
+          if (stScore > 0) {
+            html += `<td>
+              <a href="${row.stLink}" target="_blank" class="challenge-link-dark">${row.stDisplay}</a><br>
+              <span class="${stScore >= 80 ? 'pass-tag' : 'score-tag'}">${stScore} 分${stScore >= 80 ? ' ✅合格' : ''}</span>
+            </td>`;
+          } else {
+            html += `<td class="not-tested">
+              <a href="${row.stLink}" target="_blank" class="challenge-link-dark">${row.stDisplay}</a><br>
+              <span class="sub-text">尚未挑戰</span>
+            </td>`;
+          }
+        }
+
+        html += "</tr>";
+      });
+
+      html += "</tbody></table>";
+      containerEl.innerHTML = html;
+    }
+
+    // ==================== 5. UI 切換與彈窗互動控制 ====================
+    function switchView(viewId) {
+      document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+      document.getElementById(viewId).style.display = 'block';
+
+      if (viewId === 'map-view') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+      } else if (viewId === 'challenge-1a-view') {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
       }
     }
-    
-    html += "</tr>";
-  });
-  
-  html += "</tbody></table>";
-  document.getElementById("result").innerHTML = html;
-}
 
-// 查詢使用者按鈕
-function queryScores(){
-  const nickname = document.getElementById("nicknameInput").value.trim();
-  if(!nickname) return;
-  loadLeaderboard(nickname);
-}
+    function openLoginModal() {
+      document.getElementById("login-modal").style.display = "flex";
+    }
 
-// 頁面初始化
-renderInitialTable();
-loadLeaderboard();
-</script>
+    function closeLoginModal() {
+      document.getElementById("login-modal").style.display = "none";
+    }
+
+    async function handleAuthSubmit() {
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value.trim();
+
+      if (!email || !password) {
+        alert("請輸入完整的 Email 與密碼");
+        return;
+      }
+
+      try {
+        // 先嘗試登入
+        await auth.signInWithEmailAndPassword(email, password);
+        closeLoginModal();
+      } catch (error) {
+        // 帳號不存在則直接為使用者註冊
+        if (error.code === 'auth/user-not-found') {
+          try {
+            await auth.createUserWithEmailAndPassword(email, password);
+            alert("已為您建立新帳號並登入！");
+            closeLoginModal();
+          } catch (signUpErr) {
+            alert("註冊失敗：" + signUpErr.message);
+          }
+        } else {
+          alert("登入失敗：" + error.message);
+        }
+      }
+    }
+
+    function handleLogout() {
+      auth.signOut().then(() => {
+        alert("已成功登出");
+        switchView('map-view');
+      });
+    }
+
+    // 初始化頁面
+    window.onload = function() {
+      resetGuestProfile();
+      switchView('map-view');
+    };
+  </script>
 </body>
 </html>
