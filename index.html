@@ -1,215 +1,345 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>多語種學習系統</title>
-  <style>
-    :root {
-      --primary-color: #58cc02;
-      --secondary-color: #1cb0f6;
-      --bg-color: #f7f9fa;
-      --card-bg: #ffffff;
-      --border-color: #e5e5e5;
-      --text-color: #3c3c3c;
-    }
-
-    body {
-      font-family: 'Din Round', 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      margin: 0;
-      padding: 0;
-    }
-
-    .app-header {
-      background: white;
-      border-bottom: 2px solid var(--border-color);
-      padding: 12px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .app-container {
-      display: flex;
-      max-width: 1000px;
-      margin: 20px auto;
-      padding: 0 16px;
-      gap: 20px;
-    }
-
-    .main-content {
-      flex: 1;
-    }
-
-    .level-selector {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-      overflow-x: auto;
-      padding-bottom: 8px;
-    }
-
-    .btn-3d {
-      border: none;
-      border-radius: 12px;
-      padding: 10px 18px;
-      font-weight: bold;
-      font-size: 15px;
-      cursor: pointer;
-      transition: all 0.1s ease;
-      position: relative;
-    }
-
-    .btn-level {
-      background-color: #fff;
-      color: #777;
-      border: 2px solid var(--border-color);
-      box-shadow: 0 3px 0 var(--border-color);
-    }
-
-    .btn-level.active {
-      background-color: var(--secondary-color);
-      color: white;
-      border-color: var(--secondary-color);
-      box-shadow: 0 3px 0 #1899d6;
-    }
-
-    .btn-3d:active {
-      transform: translateY(3px);
-      box-shadow: 0 0 0 transparent !important;
-    }
-
-    .card-3d {
-      background: var(--card-bg);
-      border: 2px solid var(--border-color);
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 4px 0 var(--border-color);
-      margin-bottom: 20px;
-    }
-
-    .level-view {
-      display: none;
-    }
-
-    .level-view.active {
-      display: block;
-    }
-
-    /* 表格樣式 */
-    .styled-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-      text-align: center;
-    }
-
-    .styled-table th, .styled-table td {
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .styled-table th {
-      background-color: #f8f9fa;
-      color: #555;
-    }
-
-    .btn-link {
-      color: var(--secondary-color);
-      font-weight: bold;
-      text-decoration: none;
-    }
-
-    .btn-link:hover {
-      text-decoration: underline;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>歡迎參加挑戰賽</title>
+<meta property="og:title" content="歡迎參加挑戰賽">
+<meta property="og:description" content="歡迎參加挑戰賽">
+<meta property="og:image" content="https://yoonakorean.github.io/logo.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yoonakorean.github.io/challenge-home/">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+  body {
+    font-family: sans-serif;
+    max-width: 800px;
+    margin: 30px auto;
+    text-align: center;
+    padding: 0 10px;
+  }
+  #logo {
+    width: 150px;
+    max-width: 80%;
+    margin-bottom: 10px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  input, button, select {
+    padding: 10px;
+    font-size: 16px;
+    width: 80%;
+    max-width: 400px;
+    margin: 10px auto;
+    display: block;
+    text-align: center;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  button {
+    background-color: #1cb0f6;
+    color: white;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #1493cf;
+  }
+  .level-selector-container {
+    margin: 15px auto;
+    max-width: 400px;
+  }
+  #leaderboard, #result {
+    margin-top: 20px;
+    text-align: center;
+  }
+  table {
+    margin: 0 auto;
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 780px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px 10px;
+    text-align: center;
+    vertical-align: middle;
+  }
+  th { background-color: #f2f2f2; }
+  .pass { color: green; font-weight: bold; }
+  .not-tested { color: gray; font-style: italic; }
+  .locked { color: gray; font-style: italic; pointer-events: none; cursor: default; }
+  a { text-decoration: none; color: inherit; }
+  a:hover { text-decoration: underline; }
+  .gold { background-color: #fff7c2; }
+  .silver { background-color: #ffffff; }
+  .bronze { background-color: #ffffff; }
+  .self-row { background-color: #cce5ff; }
+  td.medal { font-size: 32px; }
+  @media (max-width: 600px) {
+    input, button, select { width: 95%; }
+    table, th, td { font-size: 14px; }
+    #logo { width: 120px; }
+    td.medal { font-size: 24px; }
+  }
+</style>
 </head>
 <body>
-
-  <header class="app-header">
-    <h2 style="margin:0; color: var(--primary-color);">Duolingo 風格韓語學習系統</h2>
-    <div id="auth-status">
-      <span id="user-display-name">👤 wei</span>
-    </div>
-  </header>
-
-  <div class="app-container">
-    <main class="main-content">
-
-      <!-- 程度切換選單 -->
-      <div class="level-selector">
-        <button class="btn-3d btn-level" onclick="switchLevel('0A')">0A 基礎</button>
-        <button class="btn-3d btn-level active" onclick="switchLevel('1A')">1A 初級</button>
-        <button class="btn-3d btn-level" onclick="switchLevel('1B')">1B 初級</button>
-        <button class="btn-3d btn-level" onclick="switchLevel('2A')">2A 中級</button>
-        <button class="btn-3d btn-level" onclick="switchLevel('2B')">2B 中級</button>
-      </div>
-
-      <!-- 0A 程度頁面 -->
-      <div id="level-view-0A" class="level-view">
-        <div class="card-3d">
-          <h3>📚 0A 韓語字母與基礎發音</h3>
-          <p>這裡包含子音、母音與收音基礎練習關卡。</p>
-        </div>
-      </div>
-
-      <!-- 1A 程度頁面 -->
-      <div id="level-view-1A" class="level-view active">
-        <div class="card-3d">
-          <h3>📚 1A 課程學習地圖</h3>
-          <p>完成基礎語法與句型關卡。</p>
-        </div>
-
-        <!-- 1A 挑戰賽與表格專區 -->
-        <div class="card-3d" style="border: 2px solid #1cb0f6;">
-          <h3 style="color: #1cb0f6; margin-top: 0;">🏆 1A 韓語句子極限挑戰賽</h3>
-          
-          <div style="margin-bottom: 20px;">
-            <h4 style="margin: 8px 0; color: #555;">🥇 挑戰賽排行榜前三名</h4>
-            <div id="leaderboard-1A">
-              <p style="color: gray; text-align: center;">載入排行榜中...</p>
-            </div>
-          </div>
-
-          <div>
-            <h4 style="margin: 8px 0; color: #555;">📚 17 單元挑戰關卡 (SS跟讀 / SF填空 / ST聽打)</h4>
-            <div id="units-table-1A" style="overflow-x: auto;">
-              <p style="color: gray; text-align: center;">載入關卡中...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 1B 程度頁面 -->
-      <div id="level-view-1B" class="level-view">
-        <div class="card-3d">
-          <h3>📚 1B 課程學習地圖</h3>
-          <p>1B 課程關卡內容。</p>
-        </div>
-      </div>
-
-      <!-- 2A 程度頁面 -->
-      <div id="level-view-2A" class="level-view">
-        <div class="card-3d">
-          <h3>📚 2A 課程學習地圖</h3>
-          <p>2A 中級課程內容。</p>
-        </div>
-      </div>
-
-      <!-- 2B 程度頁面 -->
-      <div id="level-view-2B" class="level-view">
-        <div class="card-3d">
-          <h3>📚 2B 課程學習地圖</h3>
-          <p>2B 中級課程內容。</p>
-        </div>
-      </div>
-
-    </main>
+  <img src="https://yoonakorean.github.io/logo.png" alt="Logo" id="logo" />
+  <h1>歡迎參加挑戰賽</h1>
+  
+  <!-- 程度切換選單 (預留未來擴充 1B, 2A, 2B...) -->
+  <div class="level-selector-container">
+    <label for="levelSelect" style="font-weight: bold; color: #555;">選擇課程程度：</label>
+    <select id="levelSelect" onchange="onLevelChange()">
+      <option value="1A" selected>1A 程度 (11-1 至 11-26)</option>
+      <!-- 未來可在此處直接新增選項，例如：
+      <option value="1B">1B 程度 (12-1 至 12-20)</option>
+      <option value="2A">2A 程度</option>
+      -->
+    </select>
   </div>
 
-  <script src="app.js"></script>
+  <input id="nicknameInput" type="text" placeholder="請輸入您的姓名" />
+  <button onclick="queryScores()">查詢成績</button>
+
+  <!-- 排行榜 -->
+  <div id="leaderboard"></div>
+
+  <!-- 單元表 + 查詢結果 -->
+  <div id="result"></div>
+
+<script>
+// ==========================================
+// 1. 課程資料庫結構 (自動化與模組化管理)
+// ==========================================
+
+// 通用單元自動生成器：產生指定 Prefix (如 11) 與 數量 (如 26) 的單元
+function generateUnits(prefix, totalUnits) {
+  const units = [];
+  for (let i = 1; i <= totalUnits; i++) {
+    const numStr = i < 10 ? '0' + i : i;
+    units.push({
+      ssDisplay: `${i}-1 句子跟讀挑戰`,
+      sfDisplay: `${i}-1 句子填空挑戰`,
+      stDisplay: `${i}-1 句子聽打挑戰`,
+      ssUnit: `${prefix}-${i}-1 句子跟讀挑戰`,
+      sfUnit: `${prefix}-${i}-1 句子填空挑戰`,
+      stUnit: `${prefix}-${i}-1 句子聽打挑戰`,
+      ssLink: `https://yoonakorean.github.io/${prefix}${numStr}01SS/`,
+      sfLink: `https://yoonakorean.github.io/${prefix}${numStr}01SF/`,
+      stLink: `https://yoonakorean.github.io/${prefix}${numStr}01ST/`
+    });
+  }
+  return units;
+}
+
+// 程度庫對照表 (未來要新增 1B, 2A... 只需要在下方新增即可)
+const courseDatabase = {
+  "1A": generateUnits(11, 26) // 1A 包含 11-01-1 到 11-26-1
+  
+  // 未來新增範例：
+  // "1B": generateUnits(12, 20), // 12-01-1 到 12-20-1
+  // "2A": generateUnits(21, 20)
+};
+
+// 當前選擇的程度與使用者紀錄暫存
+let currentLevel = "1A";
+let cachedUserData = null;
+
+// 取得當前程度對應的單元清單
+function getCurrentUnits() {
+  return courseDatabase[currentLevel] || [];
+}
+
+// ==========================================
+// 2. 初始與 UI 渲染邏輯
+// ==========================================
+
+// 初始渲染無分數的單元表
+function renderInitialTable() {
+  const allUnitsGrouped = getCurrentUnits();
+  let html = `<h2>【${currentLevel}】單元列表</h2><table><thead><tr>
+    <th>句子跟讀挑戰</th><th>句子填空挑戰</th><th>句子聽打挑戰</th>
+  </tr></thead><tbody>`;
+  
+  allUnitsGrouped.forEach(row => {
+    html += "<tr>";
+    html += `<td><a href="${row.ssLink}" target="_blank">${row.ssDisplay}</a></td>`;
+    html += `<td class="not-tested"><a href="${row.sfLink}" target="_blank" style="color:black;">${row.sfDisplay}</a><br>尚未挑戰</td>`;
+    html += `<td class="locked">${row.stDisplay}<br>需先完成填空挑戰</td>`;
+    html += "</tr>";
+  });
+  
+  html += "</tbody></table>";
+  document.getElementById("result").innerHTML = html;
+}
+
+// 切換程度時發動
+function onLevelChange() {
+  currentLevel = document.getElementById("levelSelect").value;
+  if (cachedUserData) {
+    renderUserScores(cachedUserData);
+  } else {
+    renderInitialTable();
+  }
+}
+
+// ==========================================
+// 3. 排行榜邏輯
+// ==========================================
+function maskName(name){
+  if(!name) return "";
+  if(name.length<2) return name;
+  return name[0]+"O"+name.slice(2);
+}
+
+function parseTime(timeStr){ 
+  if(!timeStr) return 0; 
+  const match = timeStr.match(/(\d+)/);
+  return match?Number(match[1]):0;
+}
+
+function formatTime(seconds){
+  const m = Math.floor(seconds/60);
+  const s = seconds%60;
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+function renderLeaderboard(leaderboard, userData=null, userIndex=-1){
+  let html=`<h2>排行榜前三名</h2><table><thead><tr>
+    <th>名次</th><th>姓名</th><th>通關數</th><th>總分</th><th>平均時間</th>
+  </tr></thead><tbody>`;
+  const medals=["🥇","🥈","🥉"];
+  const medalClasses=["gold","silver","bronze"];
+  
+  leaderboard.slice(0,3).forEach((u,i)=>{
+    const displayName = userData && u.name===userData.name ? u.name : maskName(u.name);
+    html+=`<tr class="${medalClasses[i]}"><td class="medal">${medals[i]}</td><td>${displayName}</td><td>${u.passCount}</td><td>${u.totalScore}</td><td>${formatTime(Math.round(u.avgTime))}</td></tr>`;
+  });
+  
+  if(userData){
+    html+=`<tr class="self-row"><td class="medal">${userIndex+1}</td><td>${userData.name}</td><td>${userData.passCount}</td><td>${userData.totalScore}</td><td>${formatTime(Math.round(userData.avgTime))}</td></tr>`;
+  }else{
+    html+=`<tr class="self-row"><td colspan="5">（此處顯示查詢使用者成績）</td></tr>`;
+  }
+  
+  html+="</tbody></table>";
+  document.getElementById("leaderboard").innerHTML = html;
+}
+
+async function loadLeaderboard(nickname=""){
+  const resultDiv = document.getElementById("result");
+  try{
+    const apiUrl="https://api.sheetbest.com/sheets/6609511a-f588-4e4f-bd2b-ed551cab8770";
+    const res = await fetch(apiUrl);
+    const data = await res.json();
+    const userBest={};
+    
+    data.forEach(r=>{
+      if(!r.nickname) return;
+      const unit=(r.gametitle||"").trim();
+      if(!/^\d+-\d+-1/.test(unit)) return; // 符合數字-數字-1 格式
+      
+      let score = Number(r.score);
+      let time = parseTime(r.time);
+      if(isNaN(score)) score=0;
+      
+      if(!userBest[r.nickname]) userBest[r.nickname]={};
+      if(!userBest[r.nickname][unit] || score>userBest[r.nickname][unit].score){
+        userBest[r.nickname][unit]={score,time};
+      }
+    });
+    
+    const leaderboard=Object.entries(userBest).map(([name,units])=>{
+      const passed=Object.values(units).filter(u=>u.score>=80);
+      const passCount=passed.length;
+      const totalScore=passed.reduce((a,b)=>a+b.score,0);
+      const totalTime=Object.values(units).reduce((a,b)=>a+b.time,0);
+      const challengeCount=Object.keys(units).length;
+      const avgTime=challengeCount?totalTime/challengeCount:0;
+      return {name,passCount,totalScore,avgTime,units};
+    });
+    
+    leaderboard.sort((a,b)=>{
+      if(b.passCount!==a.passCount) return b.passCount-a.passCount;
+      if(b.totalScore!==a.totalScore) return b.totalScore-a.totalScore;
+      return a.avgTime-b.avgTime;
+    });
+    
+    let userData=null, userIndex=-1;
+    if(nickname){
+      userIndex=leaderboard.findIndex(u=>u.name.toLowerCase()===nickname.toLowerCase());
+      userData=userIndex>=0?leaderboard[userIndex]:null;
+    }
+    
+    cachedUserData = userData; // 寫入暫存
+    renderLeaderboard(leaderboard,userData,userIndex);
+    renderUserScores(userData);
+  }catch(err){
+    console.error(err);
+    resultDiv.innerHTML = `<p style="color:red;">發生錯誤，請稍後再試。</p>`;
+  }
+}
+
+// ==========================================
+// 4. 使用者查詢與合格解鎖判定
+// ==========================================
+function renderUserScores(userData){
+  const allUnitsGrouped = getCurrentUnits();
+  let html = `<h2>【${currentLevel}】單元列表</h2><table><thead><tr>
+    <th>句子跟讀挑戰</th><th>句子填空挑戰</th><th>句子聽打挑戰</th>
+  </tr></thead><tbody>`;
+  
+  allUnitsGrouped.forEach(row => {
+    const ssScore = userData?.units[row.ssUnit]?.score || 0;
+    const sfScore = userData?.units[row.sfUnit]?.score || 0;
+    const stScore = userData?.units[row.stUnit]?.score || 0;
+    
+    html += "<tr>";
+    
+    // 1. 跟讀挑戰 (永遠開放)
+    html += `<td><a href="${row.ssLink}" target="_blank">${row.ssDisplay}</a></td>`;
+    
+    // 2. 填空挑戰 (SF)
+    if(sfScore > 0){
+      html += `<td><a href="${row.sfLink}" target="_blank" style="color:black;">${row.sfDisplay}</a><br>
+               <span class="${sfScore>=80?'pass':''}">${sfScore} 分${sfScore>=80?' ✅合格':''}</span></td>`;
+    }else{
+      html += `<td class="not-tested"><a href="${row.sfLink}" target="_blank" style="color:black;">${row.sfDisplay}</a><br>尚未挑戰</td>`;
+    }
+    
+    // 3. 聽打挑戰 (ST - 需填空 > 0 分才解鎖)
+    if(sfScore <= 0){
+      html += `<td class="locked">${row.stDisplay}<br>需先完成填空挑戰</td>`;
+    }else{
+      if(stScore > 0){
+        html += `<td><a href="${row.stLink}" target="_blank" style="color:black;">${row.stDisplay}</a><br>
+                 <span class="${stScore>=80?'pass':''}">${stScore} 分${stScore>=80?' ✅合格':''}</span></td>`;
+      }else{
+        html += `<td class="not-tested"><a href="${row.stLink}" target="_blank" style="color:black;">${row.stDisplay}</a><br>尚未挑戰</td>`;
+      }
+    }
+    
+    html += "</tr>";
+  });
+  
+  html += "</tbody></table>";
+  document.getElementById("result").innerHTML = html;
+}
+
+// 查詢使用者按鈕
+function queryScores(){
+  const nickname = document.getElementById("nicknameInput").value.trim();
+  if(!nickname) return;
+  loadLeaderboard(nickname);
+}
+
+// 頁面初始化
+renderInitialTable();
+loadLeaderboard();
+</script>
 </body>
 </html>
