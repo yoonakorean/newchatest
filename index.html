@@ -156,7 +156,7 @@
             <h3 id="profile-display-name" style="margin: 0 0 4px 0;">使用者</h3>
             <p id="profile-display-email" style="font-size: 0.82rem; color: #6b7280; margin-bottom: 15px;">email@example.com</p>
             
-            <!-- 程度開通時間與權限清單 -->
+            <!-- 程度開通時間與權限清單 (對應 Google Sheet 試算表) -->
             <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 12px; border-radius: 16px; margin-bottom: 12px; text-align: left;">
                 <div style="font-size: 0.8rem; font-weight: bold; color: #4b5563; margin-bottom: 6px;">
                     <i class="fa-solid fa-graduation-cap" style="color:var(--duo-blue);"></i> 已開通程度與到期日：
@@ -284,8 +284,9 @@
     </div>
 
     <script>
-        // SheetBest API 設定
+        // SheetBest API 與 Google Sheet Memberships 網址
         const SHEETBEST_API_URL = "https://api.sheetbest.com/sheets/6609511a-f588-4e4f-bd2b-ed551cab8770";
+        const MEMBERSHIPS_SHEET_GVIZ_URL = "https://docs.google.com/spreadsheets/d/1jdpPidZQDzi07kwLoJNAVe8uhgNU33lDrm824wZJKxE/gviz/tq?sheet=Memberships";
         const PASS_SCORE = 80;
 
         // 1A 程度 17 個單元資料庫生成
@@ -374,45 +375,86 @@
         }
 
         // =========================================================================
-        // 📌 功能二：讀取與渲染程度開通時間 (Memberships) 與 權限嚴格審核
+        // 📌 功能二：直接向 Google Sheets 讀取 Memberships 的 email, courseId, expireDate
         // =========================================================================
-        async function loadUserMemberships(uid) {
+        async function loadUserMembershipsFromGoogleSheet(userEmail) {
             const container = document.getElementById('profile-memberships-list');
-            const today = new Date().toISOString().split('T')[0];
-            
+            if (!userEmail) return;
+
+            const targetEmail = userEmail.trim().toLowerCase();
+            const todayStr = new Date().toISOString().split('T')[0];
+
             try {
-                const snapshot = await firebase.firestore()
-                    .collection('Members')
-                    .doc(uid)
-                    .collection('Memberships')
-                    .get();
+                const res = await fetch(MEMBERSHIPS_SHEET_GVIZ_URL);
+                const text = await res.text();
+                
+                // 解析 GViz 回傳的 JSON 格式
+                const jsonString = text.replace(//*O_o*//, '').replace(/google.visualization.Query.setResponse\(/, '').slice(0, -2);
+                const data = JSON.parse(jsonString);
+                
+                const rows = data.table.rows || [];
+                const cols = data.table.cols || [];
+
+                // 判斷欄位索引
+                let emailIdx = -1, courseIdIdx = -1, expireDateIdx = -1;
+                cols.forEach((col, idx) => {
+                    const label = (col.label || '').toLowerCase();
+                    if (label === 'email') emailIdx = idx;
+                    if (label === 'courseid' || label === 'course_id') courseIdIdx = idx;
+                    if (label === 'expiredate' || label === 'expire_date') expireDateIdx = idx;
+                });
+
+                // 若表頭未精準匹配，退回預設欄位順序比對
+                if (emailIdx === -1) emailIdx = 1;
+                if (courseIdIdx === -1) courseIdIdx = 2;
+                if (expireDateIdx === -1) expireDateIdx = 3;
 
                 currentAllowedLevels = [];
                 let html = '';
 
-                snapshot.forEach(doc => {
-                    const m = doc.data();
-                    if (m.status === 'active' && (!m.expireDate || m.expireDate >= today)) {
-                        currentAllowedLevels.push(m.courseId);
-                        html += `
-                            <span style="background:#e0f2fe; color:#0369a1; padding:4px 8px; border-radius:8px; font-weight:bold;">
-                                ${m.courseId} (${m.expireDate ? '到期日: ' + m.expireDate : '無限期'})
-                            </span>
-                        `;
+                rows.forEach(r => {
+                    const c = r.c || [];
+                    const rowEmail = (c[emailIdx]?.v || '').toString().trim().toLowerCase();
+                    const courseId = (c[courseIdIdx]?.v || '').toString().trim().toUpperCase();
+                    let expireDate = c[expireDateIdx]?.f || c[expireDateIdx]?.v || '';
+
+                    if (rowEmail === targetEmail && courseId) {
+                        // 整理日期格式 (若 GViz 回傳 Date(yyyy,m,d))
+                        if (expireDate.includes('Date(')) {
+                            const match = expireDate.match(/\d+/g);
+                            if (match && match.length >= 3) {
+                                const y = match[0];
+                                const m = String(parseInt(match[1], 10) + 1).padStart(2, '0');
+                                const d = String(match[2]).padStart(2, '0');
+                                expireDate = `${y}-${m}-${d}`;
+                            }
+                        }
+
+                        // 判斷是否過期
+                        const isExpired = expireDate && expireDate < todayStr;
+                        if (!isExpired) {
+                            currentAllowedLevels.push(courseId);
+                            html += `
+                                <span style="background:#e0f2fe; color:#0369a1; padding:4px 8px; border-radius:8px; font-weight:bold;">
+                                    ${courseId} (${expireDate ? '到期日: ' + expireDate : '無限期'})
+                                </span>
+                            `;
+                        }
                     }
                 });
 
+                // 若未設定任何開通權限，預設僅開啟 1A
                 if (currentAllowedLevels.length === 0) {
-                    currentAllowedLevels = ["1A"]; 
+                    currentAllowedLevels = ["1A"];
                 }
 
                 if (container) {
                     container.innerHTML = html || `<span style="background:#fee2e2; color:#991b1b; padding:4px 8px; border-radius:8px; font-weight:bold;">預設僅開通 1A</span>`;
                 }
             } catch (err) {
-                console.error("讀取會員權限失敗:", err);
+                console.error("讀取 Google Sheet Memberships 失敗:", err);
                 currentAllowedLevels = ["1A"];
-                if (container) container.innerHTML = `<span style="color:#9ca3af;">無法載入開通資料</span>`;
+                if (container) container.innerHTML = `<span style="color:#9ca3af;">無法載入 Google Sheet 權限</span>`;
             }
         }
 
@@ -661,7 +703,6 @@
                     if (lastChange) {
                         const lastDate = new Date(lastChange);
                         const now = new Date();
-                        // 計算相差秒數
                         const diffSeconds = Math.floor((now - lastDate) / 1000);
                         if (diffSeconds < 10) {
                             alert(`修改太頻繁！距離下次可修改還有 ${10 - diffSeconds} 秒。`);
@@ -669,7 +710,6 @@
                         }
                     }
 
-                    // 寫入完整 ISO 時間字串
                     const nowIso = new Date().toISOString();
                     await firebase.firestore().collection('Members').doc(user.uid).set({
                         nickname: val,
@@ -720,8 +760,8 @@
 
                         document.getElementById('lbl-login-days').innerText = streakData.streak;
 
-                        // 載入權限並嚴格審核
-                        await loadUserMemberships(user.uid);
+                        // 🎯 讀取 Google Sheet Memberships 試算表權限
+                        await loadUserMembershipsFromGoogleSheet(user.email);
                         fetchUserScores();
                     } else {
                         document.getElementById('login-modal').classList.remove('hidden');
@@ -846,7 +886,7 @@
             document.getElementById('btn-confirm-initial-level')?.addEventListener('click', () => {
                 const selectedLvl = document.getElementById('initial-level-select').value;
                 
-                // 檢查該程度是否在當前權限允許清單中
+                // 檢查該程度是否在當前 Google Sheet 權限允許清單中
                 if (!currentAllowedLevels.includes(selectedLvl)) {
                     alert(`您的帳號尚未開通「${selectedLvl}」程度，如需開通請聯繫後台管理員！`);
                     return;
