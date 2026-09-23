@@ -156,7 +156,6 @@
             <h3 id="profile-display-name" style="margin: 0 0 4px 0;">使用者</h3>
             <p id="profile-display-email" style="font-size: 0.82rem; color: #6b7280; margin-bottom: 15px;">email@example.com</p>
             
-            <!-- 程度開通時間與權限清單 -->
             <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 12px; border-radius: 16px; margin-bottom: 12px; text-align: left;">
                 <div style="font-size: 0.8rem; font-weight: bold; color: #4b5563; margin-bottom: 6px;">
                     <i class="fa-solid fa-graduation-cap" style="color:var(--duo-blue);"></i> 已開通程度與到期日：
@@ -330,7 +329,7 @@
         let currentSelectedStage = null;
         let cachedUserScores = {};
         let isAuthRegisterMode = false;
-        let currentAllowedLevels = [];
+        let currentAllowedLevels = ["1A"];
         let currentUserData = {};
 
         function getTargetName() {
@@ -346,9 +345,7 @@
             return (domName && domName !== '使用者') ? domName : null;
         }
 
-        // =========================================================================
-        // 📌 功能一：計算與更新連續登入天數 (Streak)
-        // =========================================================================
+        // 📌 計算與更新連續登入天數
         function checkAndUpdateStreak(lastLoginDate, currentStreak = 1) {
             const today = new Date().toISOString().split('T')[0];
             if (!lastLoginDate) {
@@ -373,9 +370,7 @@
             return { streak: newStreak, lastLoginDate: today };
         }
 
-        // =========================================================================
-        // 📌 功能二：讀取與渲染程度開通時間 (Memberships) 與 權限嚴格審核
-        // =========================================================================
+        // 📌 讀取會員開通權限
         async function loadUserMemberships(uid) {
             const container = document.getElementById('profile-memberships-list');
             const today = new Date().toISOString().split('T')[0];
@@ -416,9 +411,7 @@
             }
         }
 
-        // =========================================================================
-        // 📌 功能三：載入與渲染全球英雄排行榜
-        // =========================================================================
+        // 📌 載入排行榜
         async function renderLeaderboard() {
             const listContainer = document.getElementById('leaderboard-list');
             if (!listContainer) return;
@@ -460,9 +453,7 @@
             }
         }
 
-        // =========================================================================
-        // 🎯 抓取試算表成績 (SheetBest)
-        // =========================================================================
+        // 🎯 抓取試算表成績 (SheetBest) - 已修正防重複採計與最高分計算
         async function fetchUserScores() {
             try {
                 const targetName = getTargetName();
@@ -473,8 +464,7 @@
                 if (!response.ok) throw new Error("API 存取失敗");
                 
                 const data = await response.json();
-                cachedUserScores = {};
-                let totalXp = 0;
+                cachedUserScores = {}; // 每次載入前重置快取
 
                 data.forEach(row => {
                     const rowName = (row.nickname || row.name || row.Name || row.username || '').toString().trim().toLowerCase();
@@ -487,18 +477,26 @@
                     const isEmailMatch = targetEmailLower && rowEmail === targetEmailLower;
 
                     if (isNameMatch || isEmailMatch) {
-                        const stageCode = (row.gametitle || row.code || row.stageCode || row.Stage || '').toString().trim();
+                        let stageCode = (row.gametitle || row.code || row.stageCode || row.Stage || '').toString().trim();
                         const score = parseInt(row.score || row.Score || 0, 10) || 0;
 
                         if (stageCode) {
-                            if (!cachedUserScores[stageCode] || score > cachedUserScores[stageCode]) {
+                            // 核心防重複：只取該關卡出現過的最大分數
+                            if (cachedUserScores[stageCode] !== undefined) {
+                                cachedUserScores[stageCode] = Math.max(cachedUserScores[stageCode], score);
+                            } else {
                                 cachedUserScores[stageCode] = score;
                             }
                         }
                     }
                 });
 
-                Object.values(cachedUserScores).forEach(s => totalXp += s);
+                // 計算總 XP：加總各關卡的唯一最高分
+                let totalXp = 0;
+                Object.values(cachedUserScores).forEach(score => {
+                    totalXp += score;
+                });
+
                 document.getElementById('lbl-xp').innerText = totalXp;
 
                 if (currentUser) {
@@ -507,10 +505,13 @@
                     }, { merge: true });
                 }
 
+                // 刷新地圖與標籤
                 const activeLevel = document.getElementById('lbl-user-level').innerText || "1A";
                 renderCourseMap(activeLevel);
             } catch (error) {
                 console.error("載入成績失敗:", error);
+                const activeLevel = document.getElementById('lbl-user-level').innerText || "1A";
+                renderCourseMap(activeLevel);
             }
         }
 
@@ -521,9 +522,9 @@
                 const userName = getTargetName() || name || 'UWEI';
                 const currentUser = firebase.auth().currentUser;
 
-                if (!cachedUserScores[code] || score > cachedUserScores[code]) {
-                    cachedUserScores[code] = score;
-                }
+                // 本地快取立即比較並更新為最高分
+                const currentScore = cachedUserScores[code] || 0;
+                cachedUserScores[code] = Math.max(currentScore, score);
 
                 try {
                     await fetch(SHEETBEST_API_URL, {
@@ -545,7 +546,7 @@
             }
         });
 
-        // 地圖渲染邏輯
+        // 🗺️ 地圖渲染邏輯
         function renderCourseMap(level = "1A") {
             const container = document.getElementById('units-map-list');
             if (!container) return;
@@ -582,6 +583,7 @@
                     const score = cachedUserScores[stage.code] || 0;
                     let isLocked = false;
 
+                    // 解鎖判斷：聽打關卡需看填空關卡是否達到 PASS_SCORE
                     if (stage.reqUnlock) {
                         const parentScore = cachedUserScores[stage.reqUnlock] || 0;
                         if (parentScore < PASS_SCORE) {
@@ -628,13 +630,20 @@
             });
         }
 
+        // 🚀 啟動關卡遊戲
         function launchStageGame(stage) {
             document.getElementById('map-view').classList.add('hidden');
             document.getElementById('game-view').classList.remove('hidden');
 
             document.getElementById('game-title').innerText = stage.code;
+
+            const targetName = getTargetName();
+            const fullLink = targetName 
+                ? `${stage.link}?nickname=${encodeURIComponent(targetName)}` 
+                : stage.link;
+
             document.getElementById('activity-player-content').innerHTML = `
-                <iframe src="${stage.link}" style="width:100%; height:100%; border:none;" allow="microphone; autoplay;"></iframe>
+                <iframe src="${fullLink}" style="width:100%; height:100%; border:none;" allow="microphone; autoplay;"></iframe>
             `;
         }
 
@@ -642,11 +651,13 @@
         // DOM 初始化與事件綁定
         // =========================================================================
         window.addEventListener('DOMContentLoaded', () => {
+            renderCourseMap("1A");
+
             const savedNickname = localStorage.getItem('sheet_target_nickname') || 'UWEI';
             const nicknameInput = document.getElementById('sheet-nickname-input');
             if (nicknameInput) nicknameInput.value = savedNickname;
 
-            // 📌 暱稱修改 (測試階段：10秒即可修改一次)
+            // 儲存暱稱
             document.getElementById('btn-save-nickname')?.addEventListener('click', async () => {
                 const val = nicknameInput.value.trim();
                 const user = firebase.auth().currentUser;
@@ -661,7 +672,6 @@
                     if (lastChange) {
                         const lastDate = new Date(lastChange);
                         const now = new Date();
-                        // 計算相差秒數
                         const diffSeconds = Math.floor((now - lastDate) / 1000);
                         if (diffSeconds < 10) {
                             alert(`修改太頻繁！距離下次可修改還有 ${10 - diffSeconds} 秒。`);
@@ -669,7 +679,6 @@
                         }
                     }
 
-                    // 寫入完整 ISO 時間字串
                     const nowIso = new Date().toISOString();
                     await firebase.firestore().collection('Members').doc(user.uid).set({
                         nickname: val,
@@ -685,7 +694,7 @@
                 fetchUserScores();
             });
 
-            // Firebase 身分監聽
+            // Firebase 身分狀態監聽
             if (typeof firebase !== 'undefined' && firebase.auth) {
                 firebase.auth().onAuthStateChanged(async (user) => {
                     if (user) {
@@ -697,7 +706,6 @@
                         document.getElementById('profile-display-name').innerText = displayName;
                         document.getElementById('profile-display-email').innerText = user.email;
 
-                        // 同步 Members 資料
                         const userRef = firebase.firestore().collection('Members').doc(user.uid);
                         const userDoc = await userRef.get();
                         currentUserData = userDoc.exists ? userDoc.data() : {};
@@ -708,7 +716,6 @@
                             localStorage.setItem('sheet_target_nickname', currentUserData.nickname);
                         }
 
-                        // 天數計算
                         const streakData = checkAndUpdateStreak(currentUserData.lastLoginDate, currentUserData.streak || 1);
                         await userRef.set({
                             streak: streakData.streak,
@@ -720,7 +727,6 @@
 
                         document.getElementById('lbl-login-days').innerText = streakData.streak;
 
-                        // 載入權限並嚴格審核
                         await loadUserMemberships(user.uid);
                         fetchUserScores();
                     } else {
@@ -734,6 +740,7 @@
                 fetchUserScores();
             }
 
+            // 頁籤切換
             const tabLogin = document.getElementById('tab-login');
             const tabRegister = document.getElementById('tab-register');
             const btnAuthSubmit = document.getElementById('btn-auth-submit');
@@ -752,6 +759,7 @@
                 btnAuthSubmit.innerText = '註冊並登入';
             });
 
+            // 登入 / 註冊
             btnAuthSubmit.addEventListener('click', () => {
                 const email = document.getElementById('email-input').value.trim();
                 const password = document.getElementById('password-input').value.trim();
@@ -794,7 +802,7 @@
                 });
             });
 
-            // 觸發個人檔案與排行榜 Modal
+            // Modal 開啟/關閉事件
             document.getElementById('btn-profile-trigger').addEventListener('click', () => {
                 document.getElementById('modal-profile').classList.remove('hidden');
             });
@@ -842,11 +850,10 @@
                 document.getElementById('modal-select-initial-level').classList.add('hidden');
             });
 
-            // 📌 嚴格切換程度與權限阻擋
+            // 切換程度與權限阻擋
             document.getElementById('btn-confirm-initial-level')?.addEventListener('click', () => {
                 const selectedLvl = document.getElementById('initial-level-select').value;
                 
-                // 檢查該程度是否在當前權限允許清單中
                 if (!currentAllowedLevels.includes(selectedLvl)) {
                     alert(`您的帳號尚未開通「${selectedLvl}」程度，如需開通請聯繫後台管理員！`);
                     return;
