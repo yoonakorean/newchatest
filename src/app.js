@@ -1,4 +1,4 @@
-// 全局使用者狀態
+// 全局狀態與使用者資訊
 let currentUserProfile = {
   displayName: "wei",
   nickname: "wei",
@@ -7,7 +7,7 @@ let currentUserProfile = {
 
 const API_1A = "https://api.sheetbest.com/sheets/6609511a-f588-4e4f-bd2b-ed551cab8770";
 
-// 切換頁面
+// 切換程度頁面
 function switchLevel(levelKey) {
   document.querySelectorAll('.level-view').forEach(el => el.classList.remove('active'));
 
@@ -24,14 +24,14 @@ function switchLevel(levelKey) {
   }
 
   if (levelKey === '1A') {
-    // 立即繪製表格
+    // 1. 先立刻把 HTML 關卡表格畫出來（保證連結一定看得到）
     renderInitialUnitsHTML();
-    // 非同步向 SheetBest 抓資料填寫成績
+    // 2. 再去非同步抓取成績資料填補進去
     fetch1AChallengeData();
   }
 }
 
-// 預先繪製 17 單元表格（確保連結 100% 立即顯示）
+// 先繪製基本表格與連結（不等 API，直接出畫面）
 function renderInitialUnitsHTML() {
   const container = document.getElementById("units-table-1A");
   if (!container) return;
@@ -66,14 +66,14 @@ function renderInitialUnitsHTML() {
   container.innerHTML = html;
 }
 
-// 抓取 SheetBest 資料
+// 向 API 取得資料並更新成績與排行榜
 async function fetch1AChallengeData() {
   const lbContainer = document.getElementById("leaderboard-1A");
   const currentNickname = currentUserProfile.displayName;
 
   try {
     const res = await fetch(API_1A);
-    if (!res.ok) throw new Error("API連線失敗");
+    if (!res.ok) throw new Error("API 回應失敗");
     const data = await res.json();
 
     const userBest = {};
@@ -90,7 +90,7 @@ async function fetch1AChallengeData() {
       });
     }
 
-    // 計算排行榜（score >= 80 才算過關）
+    // 計算排行榜
     const leaderboard = Object.entries(userBest).map(([name, units]) => {
       const passedUnits = Object.values(units).filter(u => u.score >= 80);
       const passCount = passedUnits.length;
@@ -98,16 +98,16 @@ async function fetch1AChallengeData() {
       return { name, passCount, totalScore };
     }).sort((a, b) => b.passCount - a.passCount || b.totalScore - a.totalScore);
 
-    // 更新排行榜
+    // 更新排行榜渲染
     renderLeaderboardHTML(leaderboard, currentNickname);
 
-    // 更新分數與過關狀態至表格中
+    // 更新個人成績至剛才畫好的表格中
     const userData = userBest[currentNickname] || {};
     updateScoresInTable(userData, currentNickname);
 
   } catch (err) {
-    console.error("無法載入 SheetBest 資料:", err);
-    if (lbContainer) lbContainer.innerHTML = `<p style="color:gray; text-align:center;">目前無排行榜資料或網路連線失敗</p>`;
+    console.error("無法載入成績資料:", err);
+    if (lbContainer) lbContainer.innerHTML = `<p style="color:gray; text-align:center;">暫無排行榜資料</p>`;
   }
 }
 
@@ -138,7 +138,7 @@ function renderLeaderboardHTML(leaderboard, currentNickname) {
   container.innerHTML = html;
 }
 
-// 填入成績與解鎖判斷
+// 動態覆蓋分數欄位
 function updateScoresInTable(userData, nickname) {
   const nickParam = nickname ? `?nickname=${encodeURIComponent(nickname)}` : '';
 
@@ -178,7 +178,7 @@ function updateScoresInTable(userData, nickname) {
   }
 }
 
-// 頁面啟動
+// 頁面初始化
 document.addEventListener("DOMContentLoaded", () => {
   const nameEl = document.getElementById("user-display-name");
   if (nameEl) nameEl.textContent = `👤 ${currentUserProfile.displayName}`;
