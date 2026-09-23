@@ -496,21 +496,34 @@
         let currentSelectedStage = null;
         let cachedUserScores = {};
 
+        // 修正：優先取得畫面中已更新的暱稱，最後才退回 Firebase 原本的 displayName/Email
         function getTargetName() {
+            const profileName = document.getElementById('profile-nickname')?.innerText?.trim();
+            const domName = document.getElementById('lbl-username')?.innerText?.trim();
+
+            if (profileName && profileName !== '學生' && profileName !== '使用者') {
+                return profileName;
+            }
+            if (domName && domName !== '學生' && domName !== '使用者') {
+                return domName;
+            }
+
             const currentUser = firebase.auth().currentUser;
             if (currentUser) {
                 return currentUser.displayName || currentUser.email.split('@')[0];
             }
-            const domName = document.getElementById('lbl-username')?.innerText;
-            return (domName && domName !== '學生' && domName !== '使用者') ? domName : null;
+            return null;
         }
 
-        // 從 SheetBest API 讀取成績
+        // 從 SheetBest API 讀取成績（支援多條件包含 Email 與舊暱稱比對）
         async function fetchUserScores() {
             try {
                 const targetName = getTargetName();
                 const currentUser = firebase.auth().currentUser;
-                const userEmail = currentUser ? currentUser.email : null;
+
+                const authDisplayName = currentUser?.displayName ? currentUser.displayName.trim().toLowerCase() : '';
+                const userEmail = currentUser?.email ? currentUser.email.trim().toLowerCase() : '';
+                const targetNameLower = targetName ? targetName.trim().toLowerCase() : '';
 
                 const response = await fetch(SHEETBEST_API_URL);
                 if (!response.ok) throw new Error("API 存取失敗");
@@ -519,16 +532,18 @@
                 cachedUserScores = {};
 
                 data.forEach(row => {
-                    const rowName = (row.nickname || row.name || row.Name || row.username || '').toString().trim().toLowerCase();
+                    const rowName = (row.nickname || row.Name || row.name || row.username || '').toString().trim().toLowerCase();
                     const rowEmail = (row.email || row.Email || '').toString().trim().toLowerCase();
 
-                    const targetNameLower = targetName ? targetName.trim().toLowerCase() : '';
-                    const targetEmailLower = userEmail ? userEmail.trim().toLowerCase() : '';
-
+                    // 只要符合以下任一條件即認定為該使用者的分數：
+                    // 1. Email 相符
+                    // 2. 欄位暱稱等於現在設定的暱稱 (uwei)
+                    // 3. 欄位暱稱等於 Google 原本名稱 (wei c)
+                    const isEmailMatch = userEmail && rowEmail === userEmail;
                     const isNameMatch = targetNameLower && rowName === targetNameLower;
-                    const isEmailMatch = targetEmailLower && rowEmail === targetEmailLower;
+                    const isAuthNameMatch = authDisplayName && rowName === authDisplayName;
 
-                    if (isNameMatch || isEmailMatch) {
+                    if (isEmailMatch || isNameMatch || isAuthNameMatch) {
                         const stageCode = (row.gametitle || row.code || row.stageCode || row.Stage || '').toString().trim();
                         const score = parseInt(row.score || row.Score || 0, 10) || 0;
 
