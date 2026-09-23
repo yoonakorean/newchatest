@@ -1,187 +1,211 @@
-// 全局狀態與使用者資訊
-let currentUserProfile = {
-  displayName: "wei",
-  nickname: "wei",
-  email: "user@example.com"
+// 使用者核心資料模型 (包含開通課程與到期日)
+let currentUserData = {
+    nickname: 'wei',
+    email: 'bleach7981@gmail.com',
+    streakDays: 2,
+    xp: 0,
+    energy: 100,
+    memberships: [
+        { level: '2B', expireDate: '2027-07-04' },
+        { level: '0A', expireDate: '2027-07-05' },
+        { level: '1A', expireDate: '2027-07-01' },
+        { level: '2A', expireDate: '2027-07-02' },
+        { level: '3A', expireDate: '2027-07-05' },
+        { level: '1B', expireDate: '2027-07-03' }
+    ]
 };
 
-const API_1A = "https://api.sheetbest.com/sheets/6609511a-f588-4e4f-bd2b-ed551cab8770";
+let currentCalDate = new Date(2026, 8, 1); // 2026年9月
 
-// 切換程度頁面
-function switchLevel(levelKey) {
-  document.querySelectorAll('.level-view').forEach(el => el.classList.remove('active'));
-
-  document.querySelectorAll('.btn-level').forEach(btn => {
-    btn.classList.remove('active');
-    if (btn.textContent.includes(levelKey)) {
-      btn.classList.add('active');
+// 安全綁定事件函數 (防止因找不到 DOM 元素導致全頁 JS 崩潰)
+function safeAddEventListener(id, event, callback) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener(event, callback);
+    } else {
+        console.warn(`[DOM 注意] 找不到 ID 為 '${id}' 的元素，已跳過事件綁定。`);
     }
-  });
-
-  const targetView = document.getElementById(`level-view-${levelKey}`);
-  if (targetView) {
-    targetView.classList.add('active');
-  }
-
-  if (levelKey === '1A') {
-    // 1. 先立刻把 HTML 關卡表格畫出來（保證連結一定看得到）
-    renderInitialUnitsHTML();
-    // 2. 再去非同步抓取成績資料填補進去
-    fetch1AChallengeData();
-  }
 }
 
-// 先繪製基本表格與連結（不等 API，直接出畫面）
-function renderInitialUnitsHTML() {
-  const container = document.getElementById("units-table-1A");
-  if (!container) return;
-
-  const nickname = currentUserProfile.displayName;
-  const nickParam = nickname ? `?nickname=${encodeURIComponent(nickname)}` : '';
-
-  let html = `<table class="styled-table">
-    <thead>
-      <tr>
-        <th>句子跟讀挑戰</th>
-        <th>句子填空挑戰</th>
-        <th>句子聽打挑戰</th>
-      </tr>
-    </thead>
-    <tbody>`;
-
-  for (let i = 1; i <= 17; i++) {
-    const numStr = i < 10 ? '0' + i : i;
-    const ssLink = `https://yoonakorean.github.io/11${numStr}01SS/${nickParam}`;
-    const sfLink = `https://yoonakorean.github.io/11${numStr}01SF/${nickParam}`;
-    const stLink = `https://yoonakorean.github.io/11${numStr}01ST/${nickParam}`;
-
-    html += `<tr>
-      <td><a href="${ssLink}" target="_blank" class="btn-link">${i}-1 句子跟讀</a></td>
-      <td id="sf-unit-${i}"><a href="${sfLink}" target="_blank" class="btn-link">${i}-1 句子填空</a><br><small style="color:gray;">載入成績...</small></td>
-      <td id="st-unit-${i}"><a href="${stLink}" target="_blank" class="btn-link">${i}-1 句子聽打</a><br><small style="color:gray;">載入成績...</small></td>
-    </tr>`;
-  }
-
-  html += "</tbody></table>";
-  container.innerHTML = html;
-}
-
-// 向 API 取得資料並更新成績與排行榜
-async function fetch1AChallengeData() {
-  const lbContainer = document.getElementById("leaderboard-1A");
-  const currentNickname = currentUserProfile.displayName;
-
-  try {
-    const res = await fetch(API_1A);
-    if (!res.ok) throw new Error("API 回應失敗");
-    const data = await res.json();
-
-    const userBest = {};
-    if (Array.isArray(data)) {
-      data.forEach(r => {
-        if (!r.nickname) return;
-        const unit = (r.gametitle || "").trim();
-        let score = Number(r.score) || 0;
-
-        if (!userBest[r.nickname]) userBest[r.nickname] = {};
-        if (!userBest[r.nickname][unit] || score > userBest[r.nickname][unit].score) {
-          userBest[r.nickname][unit] = { score };
-        }
-      });
-    }
-
-    // 計算排行榜
-    const leaderboard = Object.entries(userBest).map(([name, units]) => {
-      const passedUnits = Object.values(units).filter(u => u.score >= 80);
-      const passCount = passedUnits.length;
-      const totalScore = passedUnits.reduce((a, b) => a + b.score, 0);
-      return { name, passCount, totalScore };
-    }).sort((a, b) => b.passCount - a.passCount || b.totalScore - a.totalScore);
-
-    // 更新排行榜渲染
-    renderLeaderboardHTML(leaderboard, currentNickname);
-
-    // 更新個人成績至剛才畫好的表格中
-    const userData = userBest[currentNickname] || {};
-    updateScoresInTable(userData, currentNickname);
-
-  } catch (err) {
-    console.error("無法載入成績資料:", err);
-    if (lbContainer) lbContainer.innerHTML = `<p style="color:gray; text-align:center;">暫無排行榜資料</p>`;
-  }
-}
-
-function renderLeaderboardHTML(leaderboard, currentNickname) {
-  const container = document.getElementById("leaderboard-1A");
-  if (!container) return;
-
-  if (leaderboard.length === 0) {
-    container.innerHTML = `<p style="color:gray; text-align:center;">目前尚無挑戰紀錄</p>`;
-    return;
-  }
-
-  let html = `<table class="styled-table">
-    <thead><tr><th>名次</th><th>姓名</th><th>過關數</th><th>總分</th></tr></thead>
-    <tbody>`;
-
-  const medals = ["🥇", "🥈", "🥉"];
-  leaderboard.slice(0, 3).forEach((u, i) => {
-    html += `<tr>
-      <td>${medals[i] || i + 1}</td>
-      <td><strong>${u.name}</strong></td>
-      <td>${u.passCount}</td>
-      <td>${u.totalScore}</td>
-    </tr>`;
-  });
-
-  html += "</tbody></table>";
-  container.innerHTML = html;
-}
-
-// 動態覆蓋分數欄位
-function updateScoresInTable(userData, nickname) {
-  const nickParam = nickname ? `?nickname=${encodeURIComponent(nickname)}` : '';
-
-  for (let i = 1; i <= 17; i++) {
-    const numStr = i < 10 ? '0' + i : i;
-    const sfKey = `11-${i}-1 句子填空挑戰`;
-    const stKey = `11-${i}-1 句子聽打挑戰`;
-
-    const sfScore = userData[sfKey]?.score || 0;
-    const stScore = userData[stKey]?.score || 0;
-
-    const sfTd = document.getElementById(`sf-unit-${i}`);
-    const stTd = document.getElementById(`st-unit-${i}`);
-
-    const sfLink = `https://yoonakorean.github.io/11${numStr}01SF/${nickParam}`;
-    const stLink = `https://yoonakorean.github.io/11${numStr}01ST/${nickParam}`;
-
-    if (sfTd) {
-      const isPassed = sfScore >= 80;
-      const statusText = sfScore > 0 ? `${sfScore} 分 ${isPassed ? '✅合格' : ''}` : '未挑戰';
-      const color = isPassed ? 'green' : (sfScore > 0 ? '#f59e0b' : 'gray');
-      sfTd.innerHTML = `<a href="${sfLink}" target="_blank" class="btn-link">${i}-1 句子填空</a><br><span style="color:${color}; font-weight:bold; font-size:12px;">${statusText}</span>`;
-    }
-
-    if (stTd) {
-      if (sfScore <= 0) {
-        stTd.style.backgroundColor = '#fafafa';
-        stTd.innerHTML = `<span style="color:#aaa;">${i}-1 句子聽打<br><small>🔒 需先完成填空</small></span>`;
-      } else {
-        stTd.style.backgroundColor = '';
-        const isPassed = stScore >= 80;
-        const statusText = stScore > 0 ? `${stScore} 分 ${isPassed ? '✅合格' : ''}` : '未挑戰';
-        const color = isPassed ? 'green' : (stScore > 0 ? '#f59e0b' : 'gray');
-        stTd.innerHTML = `<a href="${stLink}" target="_blank" class="btn-link">${i}-1 句子聽打</a><br><span style="color:${color}; font-weight:bold; font-size:12px;">${statusText}</span>`;
-      }
-    }
-  }
-}
-
-// 頁面初始化
-document.addEventListener("DOMContentLoaded", () => {
-  const nameEl = document.getElementById("user-display-name");
-  if (nameEl) nameEl.textContent = `👤 ${currentUserProfile.displayName}`;
-
-  switchLevel('1A');
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('App 初始化中...');
+    initAppUI();
+    bindEvents();
 });
+
+function initAppUI() {
+    // 渲染會員基本資料與課程清單
+    renderProfileData();
+}
+
+function bindEvents() {
+    // 1. 頂部資訊列按鈕
+    safeAddEventListener('btn-profile-trigger', 'click', () => switchProfileView('profile'));
+    safeAddEventListener('btn-streak-trigger', 'click', openStreakModal);
+    safeAddEventListener('btn-top-leaderboard', 'click', () => switchProfileView('leaderboard'));
+    safeAddEventListener('btn-top-my-account', 'click', () => switchProfileView('profile'));
+
+    // 2. 地圖頁面按鈕
+    safeAddEventListener('btn-map-leaderboard', 'click', () => switchProfileView('leaderboard'));
+    safeAddEventListener('btn-map-my-account', 'click', () => switchProfileView('profile'));
+
+    // 3. 排行榜 / 我的帳號 切換 Tab
+    safeAddEventListener('btn-view-leaderboard', 'click', () => showSubPage('leaderboard'));
+    safeAddEventListener('btn-view-profile', 'click', () => showSubPage('profile'));
+
+    // 4. 返回地圖按鈕
+    safeAddEventListener('btn-profile-back-map', 'click', () => {
+        document.getElementById('profile-view')?.classList.add('hidden');
+        document.getElementById('map-view')?.classList.remove('hidden');
+    });
+
+    // 5. 連續簽到 (打卡月曆) Dashboard 控制
+    safeAddEventListener('btn-close-streak-modal', 'click', closeStreakModal);
+    safeAddEventListener('btn-cal-prev', 'click', () => changeCalMonth(-1));
+    safeAddEventListener('btn-cal-next', 'click', () => changeCalMonth(1));
+
+    // 6. 排行榜 Tab (好友榜 / 全球總榜) 切換
+    safeAddEventListener('tab-leaderboard-friends', 'click', () => switchRankTab('friends'));
+    safeAddEventListener('tab-leaderboard-global', 'click', () => switchRankTab('global'));
+
+    // 7. 登出 Modal 控制
+    safeAddEventListener('btn-trigger-logout', 'click', () => {
+        document.getElementById('modal-logout-confirm')?.classList.remove('hidden');
+    });
+    safeAddEventListener('btn-logout-no', 'click', () => {
+        document.getElementById('modal-logout-confirm')?.classList.add('hidden');
+    });
+    safeAddEventListener('btn-logout-yes', 'click', () => {
+        location.reload();
+    });
+}
+
+// 渲染「我的帳號」資料與「已開通課程與到期日」列表
+function renderProfileData() {
+    const setText = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+    };
+
+    setText('lbl-username', currentUserData.nickname);
+    setText('lbl-login-days', currentUserData.streakDays);
+    setText('lbl-xp', currentUserData.xp);
+    setText('lbl-energy', currentUserData.energy);
+
+    setText('profile-nickname', currentUserData.nickname);
+    setText('profile-email', currentUserData.email);
+    setText('profile-xp', currentUserData.xp);
+    setText('profile-energy', currentUserData.energy);
+    setText('profile-streak', currentUserData.streakDays);
+
+    // 動態繪製課程到期日膠囊
+    const membershipContainer = document.getElementById('profile-memberships-list');
+    if (membershipContainer) {
+        membershipContainer.innerHTML = '';
+        currentUserData.memberships.forEach(item => {
+            const pill = document.createElement('div');
+            pill.className = 'course-badge-pill';
+            pill.textContent = `${item.level} | 到期日 ${item.expireDate}`;
+            membershipContainer.appendChild(pill);
+        });
+    }
+}
+
+// 畫面視圖切換 (地圖 <-> 個人資料/排行榜)
+function switchProfileView(defaultTab = 'profile') {
+    document.getElementById('map-view')?.classList.add('hidden');
+    document.getElementById('profile-view')?.classList.remove('hidden');
+    showSubPage(defaultTab);
+}
+
+function showSubPage(page) {
+    const btnLeaderboard = document.getElementById('btn-view-leaderboard');
+    const btnProfile = document.getElementById('btn-view-profile');
+    const pageLeaderboard = document.getElementById('sub-page-leaderboard');
+    const pageProfile = document.getElementById('sub-page-profile');
+
+    if (page === 'leaderboard') {
+        btnLeaderboard?.classList.add('active');
+        btnProfile?.classList.remove('active');
+        pageLeaderboard?.classList.remove('hidden');
+        pageProfile?.classList.add('hidden');
+    } else {
+        btnProfile?.classList.add('active');
+        btnLeaderboard?.classList.remove('active');
+        pageProfile?.classList.remove('hidden');
+        pageLeaderboard?.classList.add('hidden');
+    }
+}
+
+// 排行榜 Tab 切換
+function switchRankTab(tab) {
+    const tabFriends = document.getElementById('tab-leaderboard-friends');
+    const tabGlobal = document.getElementById('tab-leaderboard-global');
+    const contentFriends = document.getElementById('content-rank-friends');
+    const contentGlobal = document.getElementById('content-rank-global');
+
+    if (tab === 'friends') {
+        tabFriends?.classList.add('active');
+        tabGlobal?.classList.remove('active');
+        contentFriends?.classList.remove('hidden');
+        contentGlobal?.classList.add('hidden');
+    } else {
+        tabGlobal?.classList.add('active');
+        tabFriends?.classList.remove('active');
+        contentGlobal?.classList.remove('hidden');
+        contentFriends?.classList.add('hidden');
+    }
+}
+
+// 打卡月曆 Modal Controls
+function openStreakModal() {
+    const dashDays = document.getElementById('dash-streak-days');
+    if (dashDays) dashDays.textContent = currentUserData.streakDays;
+    renderCalendar(currentCalDate);
+    document.getElementById('modal-streak-dashboard')?.classList.remove('hidden');
+}
+
+function closeStreakModal() {
+    document.getElementById('modal-streak-dashboard')?.classList.add('hidden');
+}
+
+function changeCalMonth(offset) {
+    currentCalDate.setMonth(currentCalDate.getMonth() + offset);
+    renderCalendar(currentCalDate);
+}
+
+// 動態繪製打卡月曆
+function renderCalendar(date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+
+    const monthTitle = document.getElementById('lbl-calendar-month-title');
+    if (monthTitle) monthTitle.textContent = `${year}年 ${month + 1}月`;
+
+    const container = document.getElementById('calendar-days-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // 填充前面空缺天數
+    for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'calendar-day empty';
+        container.appendChild(empty);
+    }
+
+    // 生成當月天數 (2026年9月 22、23號標記為連續打卡)
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day';
+        dayEl.textContent = d;
+
+        if (year === 2026 && month === 8 && (d === 22 || d === 23)) {
+            dayEl.classList.add('checked');
+        }
+
+        container.appendChild(dayEl);
+    }
+}
