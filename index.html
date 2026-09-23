@@ -1,4 +1,4 @@
-[source: 1]<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -174,7 +174,7 @@
                     <input type="text" id="sheet-nickname-input" placeholder="輸入遊戲中使用的暱稱 (如: UWEI)" style="margin: 0; font-size: 0.85rem;">
                     <button id="btn-save-nickname" class="btn-3d btn-3d-primary" style="white-space: nowrap; padding: 0 12px; font-size: 0.8rem !important;">儲存</button>
                 </div>
-                <span style="font-size: 0.72rem; color: #9ca3af; display: block; margin-top: 4px;">* 設定後系統會用此暱稱抓取 SheetBest 成績</span>
+                <span style="font-size: 0.72rem; color: #9ca3af; display: block; margin-top: 4px;">* 測試模式：每 10 秒可修改一次暱稱</span>
             </div>
 
             <button id="btn-logout" class="btn-3d" style="width: 100%; padding: 10px; background: var(--duo-red); color: white; box-shadow: 0 4px 0 var(--duo-red-shadow);">登出帳號</button>
@@ -273,7 +273,7 @@
 
         <!-- 遊戲視圖 -->
         <div id="game-view" class="hidden map-container" style="padding: 10px;">
-            <div style="display: flex; justify-content: space-between; align- items: center; width: 100%; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px;">
                 <button id="btn-back-to-map" class="btn-3d btn-3d-secondary" style="padding: 6px 14px;">
                     <i class="fa-solid fa-arrow-left"></i> 返回地圖
                 </button>
@@ -331,6 +331,7 @@
         let cachedUserScores = {};
         let isAuthRegisterMode = false;
         let currentAllowedLevels = [];
+        let currentUserData = {};
 
         function getTargetName() {
             const savedNickname = localStorage.getItem('sheet_target_nickname');
@@ -373,7 +374,7 @@
         }
 
         // =========================================================================
-        // 📌 功能二：讀取與渲染程度開通時間 (Memberships)
+        // 📌 功能二：讀取與渲染程度開通時間 (Memberships) 與 權限嚴格審核
         // =========================================================================
         async function loadUserMemberships(uid) {
             const container = document.getElementById('profile-memberships-list');
@@ -393,19 +394,24 @@
                     const m = doc.data();
                     if (m.status === 'active' && (!m.expireDate || m.expireDate >= today)) {
                         currentAllowedLevels.push(m.courseId);
+                        html += `
+                            <span style="background:#e0f2fe; color:#0369a1; padding:4px 8px; border-radius:8px; font-weight:bold;">
+                                ${m.courseId} (${m.expireDate ? '到期日: ' + m.expireDate : '無限期'})
+                            </span>
+                        `;
                     }
-                    html += `
-                        <span style="background:#e0f2fe; color:#0369a1; padding:4px 8px; border-radius:8px; font-weight:bold;">
-                            ${m.courseId} (${m.expireDate ? '到期日: ' + m.expireDate : '永久'})
-                        </span>
-                    `;
                 });
 
+                if (currentAllowedLevels.length === 0) {
+                    currentAllowedLevels = ["1A"]; 
+                }
+
                 if (container) {
-                    container.innerHTML = html || `<span style="color:#9ca3af;">尚未開通任何課程</span>`;
+                    container.innerHTML = html || `<span style="background:#fee2e2; color:#991b1b; padding:4px 8px; border-radius:8px; font-weight:bold;">預設僅開通 1A</span>`;
                 }
             } catch (err) {
                 console.error("讀取會員權限失敗:", err);
+                currentAllowedLevels = ["1A"];
                 if (container) container.innerHTML = `<span style="color:#9ca3af;">無法載入開通資料</span>`;
             }
         }
@@ -492,7 +498,6 @@
                     }
                 });
 
-                // 計算經驗值 (XP)
                 Object.values(cachedUserScores).forEach(s => totalXp += s);
                 document.getElementById('lbl-xp').innerText = totalXp;
 
@@ -641,10 +646,42 @@
             const nicknameInput = document.getElementById('sheet-nickname-input');
             if (nicknameInput) nicknameInput.value = savedNickname;
 
-            document.getElementById('btn-save-nickname')?.addEventListener('click', () => {
+            // 📌 暱稱修改 (測試階段：10秒即可修改一次)
+            document.getElementById('btn-save-nickname')?.addEventListener('click', async () => {
                 const val = nicknameInput.value.trim();
+                const user = firebase.auth().currentUser;
+
+                if (!val) {
+                    alert('請輸入有效暱稱！');
+                    return;
+                }
+
+                if (user) {
+                    const lastChange = currentUserData?.lastNicknameChange;
+                    if (lastChange) {
+                        const lastDate = new Date(lastChange);
+                        const now = new Date();
+                        // 計算相差秒數
+                        const diffSeconds = Math.floor((now - lastDate) / 1000);
+                        if (diffSeconds < 10) {
+                            alert(`修改太頻繁！距離下次可修改還有 ${10 - diffSeconds} 秒。`);
+                            return;
+                        }
+                    }
+
+                    // 寫入完整 ISO 時間字串
+                    const nowIso = new Date().toISOString();
+                    await firebase.firestore().collection('Members').doc(user.uid).set({
+                        nickname: val,
+                        lastNicknameChange: nowIso
+                    }, { merge: true });
+
+                    currentUserData.nickname = val;
+                    currentUserData.lastNicknameChange = nowIso;
+                }
+
                 localStorage.setItem('sheet_target_nickname', val);
-                alert(`已儲存暱稱：${val || '預設名稱'}\n正在為您同步成績...`);
+                alert(`已成功儲存暱稱：${val}\n正在同步成績...`);
                 fetchUserScores();
             });
 
@@ -660,24 +697,31 @@
                         document.getElementById('profile-display-name').innerText = displayName;
                         document.getElementById('profile-display-email').innerText = user.email;
 
-                        // 登入天數 (Streak) 同步與計算
+                        // 同步 Members 資料
                         const userRef = firebase.firestore().collection('Members').doc(user.uid);
                         const userDoc = await userRef.get();
-                        const userData = userDoc.exists ? userDoc.data() : {};
+                        currentUserData = userDoc.exists ? userDoc.data() : {};
 
-                        const streakData = checkAndUpdateStreak(userData.lastLoginDate, userData.streak || 1);
+                        if (currentUserData.nickname) {
+                            document.getElementById('lbl-username').innerText = currentUserData.nickname;
+                            nicknameInput.value = currentUserData.nickname;
+                            localStorage.setItem('sheet_target_nickname', currentUserData.nickname);
+                        }
+
+                        // 天數計算
+                        const streakData = checkAndUpdateStreak(currentUserData.lastLoginDate, currentUserData.streak || 1);
                         await userRef.set({
                             streak: streakData.streak,
                             lastLoginDate: streakData.lastLoginDate,
                             email: user.email,
-                            nickname: userData.nickname || displayName,
+                            nickname: currentUserData.nickname || displayName,
                             updatedAt: new Date().toISOString()
                         }, { merge: true });
 
                         document.getElementById('lbl-login-days').innerText = streakData.streak;
 
-                        // 載入程度權限與試算表分數
-                        loadUserMemberships(user.uid);
+                        // 載入權限並嚴格審核
+                        await loadUserMemberships(user.uid);
                         fetchUserScores();
                     } else {
                         document.getElementById('login-modal').classList.remove('hidden');
@@ -798,12 +842,13 @@
                 document.getElementById('modal-select-initial-level').classList.add('hidden');
             });
 
-            // 切換程度與權限檢查
+            // 📌 嚴格切換程度與權限阻擋
             document.getElementById('btn-confirm-initial-level')?.addEventListener('click', () => {
                 const selectedLvl = document.getElementById('initial-level-select').value;
                 
-                if (currentAllowedLevels.length > 0 && !currentAllowedLevels.includes(selectedLvl)) {
-                    alert(`您的帳號尚未開通「${selectedLvl}」程度，請聯繫管理員開通！`);
+                // 檢查該程度是否在當前權限允許清單中
+                if (!currentAllowedLevels.includes(selectedLvl)) {
+                    alert(`您的帳號尚未開通「${selectedLvl}」程度，如需開通請聯繫後台管理員！`);
                     return;
                 }
 
