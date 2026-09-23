@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+[source: 1]<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -156,6 +156,16 @@
             <h3 id="profile-display-name" style="margin: 0 0 4px 0;">使用者</h3>
             <p id="profile-display-email" style="font-size: 0.82rem; color: #6b7280; margin-bottom: 15px;">email@example.com</p>
             
+            <!-- 程度開通時間與權限清單 -->
+            <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 12px; border-radius: 16px; margin-bottom: 12px; text-align: left;">
+                <div style="font-size: 0.8rem; font-weight: bold; color: #4b5563; margin-bottom: 6px;">
+                    <i class="fa-solid fa-graduation-cap" style="color:var(--duo-blue);"></i> 已開通程度與到期日：
+                </div>
+                <div id="profile-memberships-list" style="display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.78rem;">
+                    <span style="color:#9ca3af;">權限載入中...</span>
+                </div>
+            </div>
+
             <div style="background: #f3f4f6; padding: 12px; border-radius: 16px; margin-bottom: 15px; text-align: left;">
                 <label style="font-size: 0.8rem; font-weight: bold; color: #4b5563; display: block; margin-bottom: 4px;">
                     <i class="fa-solid fa-table"></i> 連動試算表暱稱：
@@ -171,7 +181,18 @@
         </div>
     </div>
 
-    <!-- 🔒 3. 鎖定關卡提示 Modal -->
+    <!-- 🏆 3. 排行榜 Modal -->
+    <div id="modal-leaderboard" class="custom-modal hidden">
+        <div class="custom-modal-card" style="max-width: 420px; width: 90%;">
+            <div class="close-icon-circle" id="btn-close-leaderboard"><i class="fa-solid fa-xmark"></i></div>
+            <h3 style="margin: 10px 0 15px 0; color: #1f2937;"><i class="fa-solid fa-trophy" style="color: var(--duo-gold);"></i> 英雄排行榜</h3>
+            <div id="leaderboard-list" style="max-height: 320px; overflow-y: auto; text-align: left;">
+                <p style="text-align:center; color:#9ca3af;">排行榜載入中...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔒 4. 鎖定關卡提示 Modal -->
     <div id="modal-locked" class="custom-modal hidden">
         <div class="custom-modal-card">
             <div style="font-size: 2.8rem; color: #f59e0b; margin-bottom: 10px;"><i class="fa-solid fa-lock"></i></div>
@@ -181,7 +202,7 @@
         </div>
     </div>
 
-    <!-- 📖 4. 課前暖身 Modal -->
+    <!-- 📖 5. 課前暖身 Modal -->
     <div id="modal-warmup-ask" class="custom-modal hidden">
         <div class="custom-modal-card">
             <div class="close-icon-circle" id="btn-close-warmup-ask"><i class="fa-solid fa-xmark"></i></div>
@@ -195,7 +216,7 @@
         </div>
     </div>
 
-    <!-- 🎓 5. 切換程度 Modal -->
+    <!-- 🎓 6. 切換程度 Modal -->
     <div id="modal-select-initial-level" class="custom-modal hidden">
         <div class="custom-modal-card">
             <div class="close-icon-circle" id="btn-close-level-modal"><i class="fa-solid fa-xmark"></i></div>
@@ -224,12 +245,12 @@
                 <span id="lbl-username">使用者</span>
             </div>
 
-            <div class="user-meta-item">
+            <div class="user-meta-item" title="連續登入天數">
                 <i class="fa-solid fa-fire" style="color: var(--duo-fire-red); font-size: 1.05rem;"></i>
                 <span id="lbl-login-days">1</span> 天
             </div>
 
-            <div class="user-meta-item">
+            <div class="user-meta-item" id="btn-leaderboard-trigger" title="點擊檢視排行榜">
                 <i class="fa-solid fa-star" style="color: var(--duo-gold); font-size: 1.05rem;"></i>
                 <span id="lbl-xp">0</span>
             </div>
@@ -252,7 +273,7 @@
 
         <!-- 遊戲視圖 -->
         <div id="game-view" class="hidden map-container" style="padding: 10px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align- items: center; width: 100%; margin-bottom: 8px;">
                 <button id="btn-back-to-map" class="btn-3d btn-3d-secondary" style="padding: 6px 14px;">
                     <i class="fa-solid fa-arrow-left"></i> 返回地圖
                 </button>
@@ -265,8 +286,6 @@
     <script>
         // SheetBest API 設定
         const SHEETBEST_API_URL = "https://api.sheetbest.com/sheets/6609511a-f588-4e4f-bd2b-ed551cab8770";
-
-        // PASS 分數門檻：80 分
         const PASS_SCORE = 80;
 
         // 1A 程度 17 個單元資料庫生成
@@ -311,6 +330,7 @@
         let currentSelectedStage = null;
         let cachedUserScores = {};
         let isAuthRegisterMode = false;
+        let currentAllowedLevels = [];
 
         function getTargetName() {
             const savedNickname = localStorage.getItem('sheet_target_nickname');
@@ -326,7 +346,116 @@
         }
 
         // =========================================================================
-        // 🎯 核心修正：正確抓取 nickname, gametitle, score
+        // 📌 功能一：計算與更新連續登入天數 (Streak)
+        // =========================================================================
+        function checkAndUpdateStreak(lastLoginDate, currentStreak = 1) {
+            const today = new Date().toISOString().split('T')[0];
+            if (!lastLoginDate) {
+                return { streak: currentStreak, lastLoginDate: today };
+            }
+
+            const lastDate = new Date(lastLoginDate);
+            const currentDate = new Date(today);
+            const diffDays = Math.ceil((currentDate - lastDate) / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) {
+                return { streak: currentStreak, lastLoginDate: lastLoginDate };
+            }
+
+            let newStreak = currentStreak;
+            if (diffDays === 1) {
+                newStreak += 1;
+            } else if (diffDays > 1) {
+                newStreak = 1;
+            }
+            
+            return { streak: newStreak, lastLoginDate: today };
+        }
+
+        // =========================================================================
+        // 📌 功能二：讀取與渲染程度開通時間 (Memberships)
+        // =========================================================================
+        async function loadUserMemberships(uid) {
+            const container = document.getElementById('profile-memberships-list');
+            const today = new Date().toISOString().split('T')[0];
+            
+            try {
+                const snapshot = await firebase.firestore()
+                    .collection('Members')
+                    .doc(uid)
+                    .collection('Memberships')
+                    .get();
+
+                currentAllowedLevels = [];
+                let html = '';
+
+                snapshot.forEach(doc => {
+                    const m = doc.data();
+                    if (m.status === 'active' && (!m.expireDate || m.expireDate >= today)) {
+                        currentAllowedLevels.push(m.courseId);
+                    }
+                    html += `
+                        <span style="background:#e0f2fe; color:#0369a1; padding:4px 8px; border-radius:8px; font-weight:bold;">
+                            ${m.courseId} (${m.expireDate ? '到期日: ' + m.expireDate : '永久'})
+                        </span>
+                    `;
+                });
+
+                if (container) {
+                    container.innerHTML = html || `<span style="color:#9ca3af;">尚未開通任何課程</span>`;
+                }
+            } catch (err) {
+                console.error("讀取會員權限失敗:", err);
+                if (container) container.innerHTML = `<span style="color:#9ca3af;">無法載入開通資料</span>`;
+            }
+        }
+
+        // =========================================================================
+        // 📌 功能三：載入與渲染全球英雄排行榜
+        // =========================================================================
+        async function renderLeaderboard() {
+            const listContainer = document.getElementById('leaderboard-list');
+            if (!listContainer) return;
+
+            try {
+                const snapshot = await firebase.firestore()
+                    .collection('Members')
+                    .orderBy('xp', 'desc')
+                    .limit(20)
+                    .get();
+
+                if (snapshot.empty) {
+                    listContainer.innerHTML = `<p style="text-align:center; color:#9ca3af;">目前尚無排行榜資料</p>`;
+                    return;
+                }
+
+                let html = '';
+                let rank = 1;
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    html += `
+                        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 4px; border-bottom:1px solid #e5e7eb;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="font-weight:bold; width:22px; text-align:center; color:${rank <= 3 ? 'var(--duo-gold)' : '#6b7280'};">${rank}</span>
+                                <span style="font-weight:bold; color:#374151;">${data.nickname || data.email?.split('@')[0] || '學員'}</span>
+                            </div>
+                            <div style="font-size:0.85rem; color:#6b7280; display:flex; gap:10px;">
+                                <span><i class="fa-solid fa-star" style="color:var(--duo-gold);"></i> ${data.xp || 0} XP</span>
+                                <span><i class="fa-solid fa-fire" style="color:var(--duo-fire-red);"></i> ${data.streak || 1} 天</span>
+                            </div>
+                        </div>
+                    `;
+                    rank++;
+                });
+                listContainer.innerHTML = html;
+            } catch (err) {
+                console.error("排行榜載入失敗:", err);
+                listContainer.innerHTML = `<p style="text-align:center; color:var(--duo-red);">載入排行榜失敗</p>`;
+            }
+        }
+
+        // =========================================================================
+        // 🎯 抓取試算表成績 (SheetBest)
         // =========================================================================
         async function fetchUserScores() {
             try {
@@ -339,9 +468,9 @@
                 
                 const data = await response.json();
                 cachedUserScores = {};
+                let totalXp = 0;
 
                 data.forEach(row => {
-                    // 🎯 優先對應你的試算表欄位：nickname
                     const rowName = (row.nickname || row.name || row.Name || row.username || '').toString().trim().toLowerCase();
                     const rowEmail = (row.email || row.Email || '').toString().trim().toLowerCase();
 
@@ -352,7 +481,6 @@
                     const isEmailMatch = targetEmailLower && rowEmail === targetEmailLower;
 
                     if (isNameMatch || isEmailMatch) {
-                        // 🎯 優先對應你的試算表欄位：gametitle 與 score
                         const stageCode = (row.gametitle || row.code || row.stageCode || row.Stage || '').toString().trim();
                         const score = parseInt(row.score || row.Score || 0, 10) || 0;
 
@@ -364,7 +492,16 @@
                     }
                 });
 
-                // 重新渲染畫面地圖
+                // 計算經驗值 (XP)
+                Object.values(cachedUserScores).forEach(s => totalXp += s);
+                document.getElementById('lbl-xp').innerText = totalXp;
+
+                if (currentUser) {
+                    firebase.firestore().collection('Members').doc(currentUser.uid).set({
+                        xp: totalXp
+                    }, { merge: true });
+                }
+
                 const activeLevel = document.getElementById('lbl-user-level').innerText || "1A";
                 renderCourseMap(activeLevel);
             } catch (error) {
@@ -384,7 +521,6 @@
                 }
 
                 try {
-                    // 寫入符合你 Google 試算表欄位的 JSON 格式
                     await fetch(SHEETBEST_API_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -400,14 +536,11 @@
                     console.error("寫入成績至 API 失敗:", err);
                 }
 
-                const activeLevel = document.getElementById('lbl-user-level').innerText || "1A";
-                renderCourseMap(activeLevel);
+                fetchUserScores();
             }
         });
 
-        // =========================================================================
-        // 地圖渲染與 80 分解鎖邏輯
-        // =========================================================================
+        // 地圖渲染邏輯
         function renderCourseMap(level = "1A") {
             const container = document.getElementById('units-map-list');
             if (!container) return;
@@ -444,7 +577,6 @@
                     const score = cachedUserScores[stage.code] || 0;
                     let isLocked = false;
 
-                    // 解鎖條件：前置關卡分數必須 >= 80 分
                     if (stage.reqUnlock) {
                         const parentScore = cachedUserScores[stage.reqUnlock] || 0;
                         if (parentScore < PASS_SCORE) {
@@ -459,7 +591,6 @@
                             document.getElementById('modal-locked').classList.remove('hidden');
                         };
                     } else {
-                        // >= 80 分顯示黃金完成狀態
                         if (score >= PASS_SCORE) {
                             btn.classList.add('status-completed');
                         }
@@ -503,7 +634,7 @@
         }
 
         // =========================================================================
-        // DOM 初始化與事件處理
+        // DOM 初始化與事件綁定
         // =========================================================================
         window.addEventListener('DOMContentLoaded', () => {
             const savedNickname = localStorage.getItem('sheet_target_nickname') || 'UWEI';
@@ -517,8 +648,9 @@
                 fetchUserScores();
             });
 
+            // Firebase 身分監聽
             if (typeof firebase !== 'undefined' && firebase.auth) {
-                firebase.auth().onAuthStateChanged((user) => {
+                firebase.auth().onAuthStateChanged(async (user) => {
                     if (user) {
                         document.getElementById('login-modal').classList.add('hidden');
                         document.getElementById('main-app').classList.remove('hidden');
@@ -528,6 +660,24 @@
                         document.getElementById('profile-display-name').innerText = displayName;
                         document.getElementById('profile-display-email').innerText = user.email;
 
+                        // 登入天數 (Streak) 同步與計算
+                        const userRef = firebase.firestore().collection('Members').doc(user.uid);
+                        const userDoc = await userRef.get();
+                        const userData = userDoc.exists ? userDoc.data() : {};
+
+                        const streakData = checkAndUpdateStreak(userData.lastLoginDate, userData.streak || 1);
+                        await userRef.set({
+                            streak: streakData.streak,
+                            lastLoginDate: streakData.lastLoginDate,
+                            email: user.email,
+                            nickname: userData.nickname || displayName,
+                            updatedAt: new Date().toISOString()
+                        }, { merge: true });
+
+                        document.getElementById('lbl-login-days').innerText = streakData.streak;
+
+                        // 載入程度權限與試算表分數
+                        loadUserMemberships(user.uid);
                         fetchUserScores();
                     } else {
                         document.getElementById('login-modal').classList.remove('hidden');
@@ -600,11 +750,20 @@
                 });
             });
 
+            // 觸發個人檔案與排行榜 Modal
             document.getElementById('btn-profile-trigger').addEventListener('click', () => {
                 document.getElementById('modal-profile').classList.remove('hidden');
             });
             document.getElementById('btn-close-profile-modal').addEventListener('click', () => {
                 document.getElementById('modal-profile').classList.add('hidden');
+            });
+
+            document.getElementById('btn-leaderboard-trigger').addEventListener('click', () => {
+                document.getElementById('modal-leaderboard').classList.remove('hidden');
+                renderLeaderboard();
+            });
+            document.getElementById('btn-close-leaderboard').addEventListener('click', () => {
+                document.getElementById('modal-leaderboard').classList.add('hidden');
             });
 
             document.getElementById('btn-warmup-yes')?.addEventListener('click', () => {
@@ -639,8 +798,15 @@
                 document.getElementById('modal-select-initial-level').classList.add('hidden');
             });
 
+            // 切換程度與權限檢查
             document.getElementById('btn-confirm-initial-level')?.addEventListener('click', () => {
                 const selectedLvl = document.getElementById('initial-level-select').value;
+                
+                if (currentAllowedLevels.length > 0 && !currentAllowedLevels.includes(selectedLvl)) {
+                    alert(`您的帳號尚未開通「${selectedLvl}」程度，請聯繫管理員開通！`);
+                    return;
+                }
+
                 document.getElementById('lbl-user-level').innerText = selectedLvl;
                 renderCourseMap(selectedLvl);
                 document.getElementById('modal-select-initial-level').classList.add('hidden');
