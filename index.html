@@ -186,7 +186,7 @@
         <div class="custom-modal-card">
             <div class="close-icon-circle" id="btn-close-warmup-ask"><i class="fa-solid fa-xmark"></i></div>
             <div style="font-size: 2.5rem; color: var(--duo-blue); margin-bottom: 10px; margin-top: 10px;"><i class="fa-solid fa-book-open-reader"></i></div>
-            <h3 style="margin: 0 0 8px 0; color: #1f2937;">進入挑戰模式</h3>
+            <h3 style="margin: 0 0 8px 0; color: #1f2937;">選擇模式</h3>
             <p style="margin: 0 0 20px 0; color: #6b7280; font-size: 0.9rem;">進入挑戰前，要先進入練習模式暖身嗎？</p>
             <div style="display: flex; gap: 10px;">
                 <button id="btn-warmup-yes" class="btn-3d btn-3d-primary" style="flex: 1; padding: 10px;">進入暖身</button>
@@ -269,7 +269,7 @@
         // PASS 分數門檻：80 分
         const PASS_SCORE = 80;
 
-        // 預設關卡密碼
+        // 預設遊戲密碼
         const GAME_PASSWORD = "1231";
 
         // 1A 程度 17 個單元資料庫生成
@@ -328,9 +328,7 @@
             return (domName && domName !== '使用者') ? domName : null;
         }
 
-        // =========================================================================
-        // 🎯 讀取成績（已改用 search 提高效能）
-        // =========================================================================
+        // 🎯 核心效能修正：改用 Search API 查詢，節省流量
         async function fetchUserScores() {
             try {
                 const targetName = getTargetName();
@@ -339,7 +337,6 @@
                     return;
                 }
 
-                // 透過 Search API 僅拉取該暱稱的成績
                 const searchUrl = `${SHEETBEST_API_URL}/search?nickname=${encodeURIComponent(targetName)}`;
                 const response = await fetch(searchUrl);
                 if (!response.ok) throw new Error("API 存取失敗");
@@ -360,7 +357,6 @@
                     });
                 }
 
-                // 重新渲染畫面地圖
                 const activeLevel = document.getElementById('lbl-user-level')?.innerText || "1A";
                 renderCourseMap(activeLevel);
             } catch (error) {
@@ -400,9 +396,7 @@
             }
         });
 
-        // =========================================================================
         // 地圖渲染與 80 分解鎖邏輯
-        // =========================================================================
         function renderCourseMap(level = "1A") {
             const container = document.getElementById('units-map-list');
             if (!container) return;
@@ -439,7 +433,7 @@
                     const score = cachedUserScores[stage.code] || 0;
                     let isLocked = false;
 
-                    // 解鎖條件：前置關卡分數必須 >= 80 分
+                    // 前置關卡滿 80 分解鎖
                     if (stage.reqUnlock) {
                         const parentScore = cachedUserScores[stage.reqUnlock] || 0;
                         if (parentScore < PASS_SCORE) {
@@ -454,7 +448,6 @@
                             document.getElementById('modal-locked').classList.remove('hidden');
                         };
                     } else {
-                        // >= 80 分顯示黃金完成狀態
                         if (score >= PASS_SCORE) {
                             btn.classList.add('status-completed');
                         }
@@ -487,14 +480,14 @@
             });
         }
 
-        // 🎯 啟動遊戲：帶上自動密碼與指定模式（practice 練習 / challenge 挑戰）
+        // 🎯 啟動遊戲：帶上自動密碼與指定模式（practice / challenge）
         function launchStageGame(stage, mode = 'challenge') {
             document.getElementById('map-view').classList.add('hidden');
             document.getElementById('game-view').classList.remove('hidden');
 
             document.getElementById('game-title').innerText = stage.code + (mode === 'practice' ? ' (練習模式)' : ' (挑戰模式)');
             
-            // 拼接 URL 參數傳送密碼與模式
+            // 將密碼與模式拼接至 iframe URL 參數中
             const baseUrl = stage.link;
             const separator = baseUrl.includes('?') ? '&' : '?';
             const targetUrl = `${baseUrl}${separator}pass=${encodeURIComponent(GAME_PASSWORD)}&mode=${encodeURIComponent(mode)}`;
@@ -504,9 +497,7 @@
             `;
         }
 
-        // =========================================================================
         // DOM 初始化與事件處理
-        // =========================================================================
         window.addEventListener('DOMContentLoaded', () => {
             const savedNickname = localStorage.getItem('sheet_target_nickname') || 'UWEI';
             const nicknameInput = document.getElementById('sheet-nickname-input');
@@ -609,13 +600,13 @@
                 document.getElementById('modal-profile').classList.add('hidden');
             });
 
-            // 🎯 按鈕修正：「進入暖身」帶入 practice 模式
+            // 🎯 按鈕行為調整：進入暖身 -> practice 模式
             document.getElementById('btn-warmup-yes')?.addEventListener('click', () => {
                 document.getElementById('modal-warmup-ask').classList.add('hidden');
                 if (currentSelectedStage) launchStageGame(currentSelectedStage, 'practice');
             });
 
-            // 🎯 按鈕修正：「直接挑戰」帶入 challenge 模式
+            // 🎯 按鈕行為調整：直接挑戰 -> challenge 模式
             document.getElementById('btn-warmup-no')?.addEventListener('click', () => {
                 document.getElementById('modal-warmup-ask').classList.add('hidden');
                 if (currentSelectedStage) launchStageGame(currentSelectedStage, 'challenge');
