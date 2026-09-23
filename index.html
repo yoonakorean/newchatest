@@ -186,8 +186,8 @@
         <div class="custom-modal-card">
             <div class="close-icon-circle" id="btn-close-warmup-ask"><i class="fa-solid fa-xmark"></i></div>
             <div style="font-size: 2.5rem; color: var(--duo-blue); margin-bottom: 10px; margin-top: 10px;"><i class="fa-solid fa-book-open-reader"></i></div>
-            <h3 style="margin: 0 0 8px 0; color: #1f2937;">課前暖身</h3>
-            <p style="margin: 0 0 20px 0; color: #6b7280; font-size: 0.9rem;">進入挑戰前，要先複習必備單字嗎？</p>
+            <h3 style="margin: 0 0 8px 0; color: #1f2937;">進入挑戰模式</h3>
+            <p style="margin: 0 0 20px 0; color: #6b7280; font-size: 0.9rem;">進入挑戰前，要先進入練習模式暖身嗎？</p>
             <div style="display: flex; gap: 10px;">
                 <button id="btn-warmup-yes" class="btn-3d btn-3d-primary" style="flex: 1; padding: 10px;">進入暖身</button>
                 <button id="btn-warmup-no" class="btn-3d btn-3d-secondary" style="flex: 1; padding: 10px;">直接挑戰</button>
@@ -269,6 +269,9 @@
         // PASS 分數門檻：80 分
         const PASS_SCORE = 80;
 
+        // 預設關卡密碼
+        const GAME_PASSWORD = "1231";
+
         // 1A 程度 17 個單元資料庫生成
         const units1A = [];
         for (let i = 1; i <= 17; i++) {
@@ -317,7 +320,7 @@
             if (savedNickname && savedNickname.trim()) {
                 return savedNickname.trim();
             }
-            const currentUser = firebase.auth().currentUser;
+            const currentUser = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null;
             if (currentUser) {
                 return currentUser.displayName || currentUser.email.split('@')[0];
             }
@@ -326,46 +329,39 @@
         }
 
         // =========================================================================
-        // 🎯 核心修正：正確抓取 nickname, gametitle, score
+        // 🎯 讀取成績（已改用 search 提高效能）
         // =========================================================================
         async function fetchUserScores() {
             try {
                 const targetName = getTargetName();
-                const currentUser = firebase.auth().currentUser;
-                const userEmail = currentUser ? currentUser.email : null;
+                if (!targetName) {
+                    renderCourseMap(document.getElementById('lbl-user-level')?.innerText || "1A");
+                    return;
+                }
 
-                const response = await fetch(SHEETBEST_API_URL);
+                // 透過 Search API 僅拉取該暱稱的成績
+                const searchUrl = `${SHEETBEST_API_URL}/search?nickname=${encodeURIComponent(targetName)}`;
+                const response = await fetch(searchUrl);
                 if (!response.ok) throw new Error("API 存取失敗");
                 
                 const data = await response.json();
                 cachedUserScores = {};
 
-                data.forEach(row => {
-                    // 🎯 優先對應你的試算表欄位：nickname
-                    const rowName = (row.nickname || row.name || row.Name || row.username || '').toString().trim().toLowerCase();
-                    const rowEmail = (row.email || row.Email || '').toString().trim().toLowerCase();
-
-                    const targetNameLower = targetName ? targetName.trim().toLowerCase() : '';
-                    const targetEmailLower = userEmail ? userEmail.trim().toLowerCase() : '';
-
-                    const isNameMatch = targetNameLower && rowName === targetNameLower;
-                    const isEmailMatch = targetEmailLower && rowEmail === targetEmailLower;
-
-                    if (isNameMatch || isEmailMatch) {
-                        // 🎯 優先對應你的試算表欄位：gametitle 與 score
-                        const stageCode = (row.gametitle || row.code || row.stageCode || row.Stage || '').toString().trim();
-                        const score = parseInt(row.score || row.Score || 0, 10) || 0;
+                if (Array.isArray(data)) {
+                    data.forEach(row => {
+                        const stageCode = (row.gametitle || row.code || '').toString().trim();
+                        const score = parseInt(row.score || 0, 10) || 0;
 
                         if (stageCode) {
                             if (!cachedUserScores[stageCode] || score > cachedUserScores[stageCode]) {
                                 cachedUserScores[stageCode] = score;
                             }
                         }
-                    }
-                });
+                    });
+                }
 
                 // 重新渲染畫面地圖
-                const activeLevel = document.getElementById('lbl-user-level').innerText || "1A";
+                const activeLevel = document.getElementById('lbl-user-level')?.innerText || "1A";
                 renderCourseMap(activeLevel);
             } catch (error) {
                 console.error("載入成績失敗:", error);
@@ -377,14 +373,13 @@
             if (event.data && event.data.type === 'GAME_FINISHED') {
                 const { code, score, name } = event.data;
                 const userName = getTargetName() || name || 'UWEI';
-                const currentUser = firebase.auth().currentUser;
+                const currentUser = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null;
 
                 if (!cachedUserScores[code] || score > cachedUserScores[code]) {
                     cachedUserScores[code] = score;
                 }
 
                 try {
-                    // 寫入符合你 Google 試算表欄位的 JSON 格式
                     await fetch(SHEETBEST_API_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -400,7 +395,7 @@
                     console.error("寫入成績至 API 失敗:", err);
                 }
 
-                const activeLevel = document.getElementById('lbl-user-level').innerText || "1A";
+                const activeLevel = document.getElementById('lbl-user-level')?.innerText || "1A";
                 renderCourseMap(activeLevel);
             }
         });
@@ -492,13 +487,20 @@
             });
         }
 
-        function launchStageGame(stage) {
+        // 🎯 啟動遊戲：帶上自動密碼與指定模式（practice 練習 / challenge 挑戰）
+        function launchStageGame(stage, mode = 'challenge') {
             document.getElementById('map-view').classList.add('hidden');
             document.getElementById('game-view').classList.remove('hidden');
 
-            document.getElementById('game-title').innerText = stage.code;
+            document.getElementById('game-title').innerText = stage.code + (mode === 'practice' ? ' (練習模式)' : ' (挑戰模式)');
+            
+            // 拼接 URL 參數傳送密碼與模式
+            const baseUrl = stage.link;
+            const separator = baseUrl.includes('?') ? '&' : '?';
+            const targetUrl = `${baseUrl}${separator}pass=${encodeURIComponent(GAME_PASSWORD)}&mode=${encodeURIComponent(mode)}`;
+
             document.getElementById('activity-player-content').innerHTML = `
-                <iframe src="${stage.link}" style="width:100%; height:100%; border:none;" allow="microphone; autoplay;"></iframe>
+                <iframe src="${targetUrl}" style="width:100%; height:100%; border:none;" allow="microphone; autoplay;"></iframe>
             `;
         }
 
@@ -544,21 +546,21 @@
             const tabRegister = document.getElementById('tab-register');
             const btnAuthSubmit = document.getElementById('btn-auth-submit');
 
-            tabLogin.addEventListener('click', () => {
+            tabLogin?.addEventListener('click', () => {
                 isAuthRegisterMode = false;
                 tabLogin.classList.add('active');
                 tabRegister.classList.remove('active');
                 btnAuthSubmit.innerText = '登入';
             });
 
-            tabRegister.addEventListener('click', () => {
+            tabRegister?.addEventListener('click', () => {
                 isAuthRegisterMode = true;
                 tabRegister.classList.add('active');
                 tabLogin.classList.remove('active');
                 btnAuthSubmit.innerText = '註冊並登入';
             });
 
-            btnAuthSubmit.addEventListener('click', () => {
+            btnAuthSubmit?.addEventListener('click', () => {
                 const email = document.getElementById('email-input').value.trim();
                 const password = document.getElementById('password-input').value.trim();
                 const errorMsg = document.getElementById('login-error-msg');
@@ -585,7 +587,7 @@
                 }
             });
 
-            document.getElementById('btn-google-login').addEventListener('click', () => {
+            document.getElementById('btn-google-login')?.addEventListener('click', () => {
                 const provider = new firebase.auth.GoogleAuthProvider();
                 firebase.auth().signInWithPopup(provider).catch(err => {
                     const errorMsg = document.getElementById('login-error-msg');
@@ -594,27 +596,29 @@
                 });
             });
 
-            document.getElementById('btn-logout').addEventListener('click', () => {
+            document.getElementById('btn-logout')?.addEventListener('click', () => {
                 firebase.auth().signOut().then(() => {
                     document.getElementById('modal-profile').classList.add('hidden');
                 });
             });
 
-            document.getElementById('btn-profile-trigger').addEventListener('click', () => {
+            document.getElementById('btn-profile-trigger')?.addEventListener('click', () => {
                 document.getElementById('modal-profile').classList.remove('hidden');
             });
-            document.getElementById('btn-close-profile-modal').addEventListener('click', () => {
+            document.getElementById('btn-close-profile-modal')?.addEventListener('click', () => {
                 document.getElementById('modal-profile').classList.add('hidden');
             });
 
+            // 🎯 按鈕修正：「進入暖身」帶入 practice 模式
             document.getElementById('btn-warmup-yes')?.addEventListener('click', () => {
                 document.getElementById('modal-warmup-ask').classList.add('hidden');
-                if (currentSelectedStage) launchStageGame(currentSelectedStage);
+                if (currentSelectedStage) launchStageGame(currentSelectedStage, 'practice');
             });
 
+            // 🎯 按鈕修正：「直接挑戰」帶入 challenge 模式
             document.getElementById('btn-warmup-no')?.addEventListener('click', () => {
                 document.getElementById('modal-warmup-ask').classList.add('hidden');
-                if (currentSelectedStage) launchStageGame(currentSelectedStage);
+                if (currentSelectedStage) launchStageGame(currentSelectedStage, 'challenge');
             });
 
             document.getElementById('btn-close-warmup-ask')?.addEventListener('click', () => {
