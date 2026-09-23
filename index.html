@@ -56,7 +56,7 @@
             user-select: none; position: relative;
         }
 
-        .btn-3d {
+        .btn-3d, .stage-btn-3d, .tab-btn {
             font-size: 0.9rem !important; font-weight: bold; border: none;
             border-radius: 16px; cursor: pointer; transition: all 0.1s ease;
             user-select: none; touch-action: manipulation;
@@ -73,9 +73,8 @@
             justify-content: center; gap: 10px; width: 100%; padding: 12px;
             font-size: 1rem; font-weight: bold; border-radius: 16px; cursor: pointer;
         }
-        .btn-google:active { transform: translateY(2px); box-shadow: 0 1px 0 #e5e7eb; }
 
-        .map-container { flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 15px; width: 100%; box-sizing: border-box; }
+        .map-container { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 15px; width: 100%; box-sizing: border-box; }
         .unit-card { width: 100%; background: #ffffff; border: 2px solid #e5e7eb; border-radius: 20px; padding: 16px; box-shadow: 0 4px 0 #f3f4f6; box-sizing: border-box; }
 
         .custom-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 9999; }
@@ -83,150 +82,117 @@
 
         .close-icon-circle { position: absolute; top: 14px; left: 16px; width: 28px; height: 28px; background: #f3f4f6; color: #9ca3af; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; }
 
-        .tab-btn { flex: 1; padding: 10px; border: none; background: #ffffff; color: #6b7280; border-radius: 12px; cursor: pointer; border: 1px solid #e5e7eb; font-weight: bold; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: #ffffff; color: #6b7280; border-radius: 12px; cursor: pointer; border: 1px solid #e5e7eb; }
         .tab-btn.active { background: var(--duo-blue); color: white; border-color: var(--duo-blue); box-shadow: 0 3px 0 var(--duo-blue-shadow); }
+
+        .nav-tab-btn { padding: 6px 12px; border: 2px solid #e5e7eb; background: #f9fafb; color: #6b7280; border-radius: 12px; font-size: 0.85rem; font-weight: bold; cursor: pointer; }
+        .nav-tab-btn.active { background: var(--duo-blue); color: white; border-color: var(--duo-blue-shadow); }
+
+        .rank-card-box { background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 16px; padding: 16px; margin-top: 12px; }
+
+        .profile-avatar-large { width: 72px; height: 72px; border-radius: 50%; border: 3px solid var(--duo-blue); margin: 0 auto 10px auto; object-fit: cover; }
+        
+        /* 課程開通氣泡膠囊樣式 */
+        .course-badge-pill { 
+            display: block; 
+            padding: 10px 14px; 
+            border-radius: 16px; 
+            font-size: 0.9rem; 
+            font-weight: bold; 
+            background: #e0f2fe; 
+            color: #0284c7; 
+            border: 1.5px solid #bae6fd; 
+            text-align: center;
+        }
+
+        /* 打卡月曆 Dashboard CSS */
+        .calendar-header-ctrl { display: flex; justify-space-between; align-items: center; margin-bottom: 10px; font-weight: bold; color: #374151; font-size: 0.9rem; }
+        .calendar-nav-btn { background: #f3f4f6; border: none; border-radius: 8px; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #4b5563; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 10px; text-align: center; }
+        .calendar-day-header { font-size: 0.75rem; color: #9ca3af; font-weight: bold; padding-bottom: 4px; }
+        .calendar-day { font-size: 0.85rem; padding: 8px 0; border-radius: 10px; background: #f9fafb; border: 1px solid #f3f4f6; color: #4b5563; }
+        .calendar-day.empty { background: transparent; border: none; }
+        .calendar-day.checked { background: #dcfce7; color: #15803d; font-weight: bold; border-color: #86efac; }
 
         .hidden { display: none !important; }
         input, select { width: 100%; padding: 10px 12px; margin: 6px 0; border-radius: 12px; border: 2px solid #e5e7eb; box-sizing: border-box; font-size: 0.95rem; }
-
-        .unit-header-bar {
-            background: var(--duo-green); color: #fff; border-radius: 16px;
-            padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
-            gap: 10px; margin-bottom: 18px; border: none; width: 100%; text-align: left; box-sizing: border-box;
-        }
-        .unit-header-bar .unit-header-title { font-weight: 800; font-size: 1rem; }
-        
-        .activity-column { display: flex; flex-direction: row; justify-content: space-around; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .activity-node-wrapper { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        .activity-node {
-            width: 60px; height: 60px; border-radius: 50%; border: none; position: relative;
-            background: var(--duo-blue); color: #fff; font-size: 1.3rem; cursor: pointer;
-            box-shadow: 0 4px 0 var(--duo-blue-shadow); display: flex; align-items: center; justify-content: center;
-            transition: transform 0.1s;
-        }
-        .activity-node:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--duo-blue-shadow); }
-        .activity-node.status-locked { background: #d1d5db !important; color: #9ca3af !important; box-shadow: 0 4px 0 #b0b6bf !important; cursor: not-allowed; }
-        .activity-node.status-completed { background: var(--duo-gold) !important; color: #fff !important; box-shadow: 0 4px 0 #b45309 !important; }
-        .activity-label { font-size: 0.75rem; font-weight: bold; color: #4b5563; text-align: center; }
-        .score-badge { font-size: 0.7rem; color: #15803d; font-weight: 800; background: #dcfce7; padding: 2px 6px; border-radius: 8px; margin-top: 2px; }
     </style>
 </head>
 <body>
 
-    <!-- 🔑 1. 登入/註冊 Modal (完全保留) -->
-    <div class="custom-modal" id="login-modal">
+    <!-- 🔑 1. Google 登入視窗 -->
+    <div class="custom-modal hidden" id="login-modal">
         <div class="custom-modal-card">
             <div style="font-size: 2.5rem; color: var(--duo-blue); margin-bottom: 10px;"><i class="fa-solid fa-graduation-cap"></i></div>
-            <h3 style="margin: 0 0 8px 0;" id="modal-auth-title">歡迎來到多語種大冒險</h3>
-            <p style="font-size: 0.85rem; color:#6b7280; margin-bottom: 15px;">請選擇登入方式開始學習</p>
+            <h3 style="margin: 0 0 8px 0;">歡迎來到多語種大冒險</h3>
+            <p style="font-size: 0.85rem; color:#6b7280; margin-bottom: 20px;">請使用已被系統開通的 Google 帳號登入</p>
             
             <button class="btn-google" id="btn-google-login">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20" alt="Google">
                 使用 Google 帳號登入
             </button>
-
-            <div style="display:flex; align-items:center; gap:10px; margin: 16px 0;">
-                <div style="flex:1; height:1px; background:#e5e7eb;"></div>
-                <span style="font-size:0.78rem; color:#9ca3af;">或使用 Email</span>
-                <div style="flex:1; height:1px; background:#e5e7eb;"></div>
-            </div>
-
-            <div style="display:flex; gap:8px; background:#f3f4f6; padding:6px; border-radius:14px; margin-bottom: 10px;">
-                <button class="tab-btn active" id="tab-login">登入</button>
-                <button class="tab-btn" id="tab-register">註冊帳號</button>
-            </div>
-
-            <input type="email" id="email-input" placeholder="電子信箱" autocomplete="username">
-            <input type="password" id="password-input" placeholder="密碼" autocomplete="current-password">
-            <button class="btn-3d btn-3d-primary" id="btn-auth-submit" style="width:100%; padding:10px; margin-top: 6px;">登入</button>
-
-            <div style="margin-top: 10px;">
-                <button id="btn-forgot-password" style="border:none; background:none; color:var(--duo-blue); cursor:pointer; font-size:0.82rem;">忘記密碼？</button>
-            </div>
-
-            <div id="login-error-msg" style="color: var(--duo-red); font-size: 0.82rem; margin-top: 12px;" class="hidden"></div>
         </div>
     </div>
 
-    <!-- 👤 2. 個人檔案 Modal -->
-    <div id="modal-profile" class="custom-modal hidden">
+    <!-- 🔥 打卡月曆 Dashboard Modal (已恢復) -->
+    <div id="modal-streak-dashboard" class="custom-modal hidden">
         <div class="custom-modal-card">
-            <div class="close-icon-circle" id="btn-close-profile-modal"><i class="fa-solid fa-xmark"></i></div>
-            <div style="font-size: 3rem; color: var(--duo-blue); margin-bottom: 10px; margin-top: 10px;"><i class="fa-solid fa-circle-user"></i></div>
-            <h3 id="profile-display-name" style="margin: 0 0 4px 0;">使用者</h3>
-            <p id="profile-display-email" style="font-size: 0.82rem; color: #6b7280; margin-bottom: 15px;">email@example.com</p>
+            <div class="close-icon-circle" id="btn-close-streak-modal"><i class="fa-solid fa-xmark"></i></div>
+            <h3 style="margin: 5px 0 15px 0; color: #1f2937;"><i class="fa-solid fa-fire" style="color: var(--duo-fire-red);"></i> 學習成就統計</h3>
             
-            <div style="background: #f3f4f6; padding: 12px; border-radius: 16px; margin-bottom: 15px; text-align: left;">
-                <label style="font-size: 0.8rem; font-weight: bold; color: #4b5563; display: block; margin-bottom: 4px;">
-                    <i class="fa-solid fa-table"></i> 連動試算表暱稱：
-                </label>
-                <div style="display: flex; gap: 6px;">
-                    <input type="text" id="sheet-nickname-input" placeholder="輸入遊戲中使用的暱稱 (如: UWEI)" style="margin: 0; font-size: 0.85rem;">
-                    <button id="btn-save-nickname" class="btn-3d btn-3d-primary" style="white-space: nowrap; padding: 0 12px; font-size: 0.8rem !important;">儲存</button>
+            <div style="display: flex; justify-content: space-around; background: #f9fafb; padding: 12px; border-radius: 16px; margin-bottom: 15px; border: 1px solid #e5e7eb;">
+                <div>
+                    <div style="font-size: 0.75rem; color: #6b7280;">打卡天數</div>
+                    <div style="font-size: 1.2rem; font-weight: bold; color: var(--duo-fire-red);"><span id="dash-streak-days">2</span> 天</div>
                 </div>
-                <span style="font-size: 0.72rem; color: #9ca3af; display: block; margin-top: 4px;">* 設定後系統會用此暱稱抓取 SheetBest 成績</span>
+                <div style="border-left: 1px solid #e5e7eb;"></div>
+                <div>
+                    <div style="font-size: 0.75rem; color: #6b7280;">專注時數</div>
+                    <div style="font-size: 1.2rem; font-weight: bold; color: var(--duo-blue);"><span id="dash-focus-hours">0.0</span> 小時</div>
+                </div>
             </div>
 
-            <button id="btn-logout" class="btn-3d" style="width: 100%; padding: 10px; background: var(--duo-red); color: white; box-shadow: 0 4px 0 var(--duo-red-shadow);">登出帳號</button>
-        </div>
-    </div>
+            <div class="calendar-header-ctrl">
+                <div><i class="fa-regular fa-calendar-days" style="color: var(--duo-gold);"></i> 簽到紀錄</div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button class="calendar-nav-btn" id="btn-cal-prev"><i class="fa-solid fa-chevron-left"></i></button>
+                    <span id="lbl-calendar-month-title">2026年 9月</span>
+                    <button class="calendar-nav-btn" id="btn-cal-next"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
 
-    <!-- 🔒 3. 鎖定關卡提示 Modal -->
-    <div id="modal-locked" class="custom-modal hidden">
-        <div class="custom-modal-card">
-            <div style="font-size: 2.8rem; color: #f59e0b; margin-bottom: 10px;"><i class="fa-solid fa-lock"></i></div>
-            <h3 style="margin: 0 0 8px 0; color: #1f2937;">關卡鎖定中</h3>
-            <p style="margin: 0 0 20px 0; color: #6b7280; font-size: 0.85rem;">需要先完成「填空挑戰」並達到 80 分以上才能解鎖聽打挑戰唷！</p>
-            <button id="btn-close-locked-modal" class="btn-3d btn-3d-primary" style="width: 100%; padding: 10px;">我知道了</button>
-        </div>
-    </div>
-
-    <!-- 📖 4. 課前暖身 Modal -->
-    <div id="modal-warmup-ask" class="custom-modal hidden">
-        <div class="custom-modal-card">
-            <div class="close-icon-circle" id="btn-close-warmup-ask"><i class="fa-solid fa-xmark"></i></div>
-            <div style="font-size: 2.5rem; color: var(--duo-blue); margin-bottom: 10px; margin-top: 10px;"><i class="fa-solid fa-book-open-reader"></i></div>
-            <h3 style="margin: 0 0 8px 0; color: #1f2937;">選擇模式</h3>
-            <p style="margin: 0 0 20px 0; color: #6b7280; font-size: 0.9rem;">進入挑戰前，要先進入練習模式暖身嗎？</p>
-            <div style="display: flex; gap: 10px;">
-                <button id="btn-warmup-yes" class="btn-3d btn-3d-primary" style="flex: 1; padding: 10px;">進入暖身</button>
-                <button id="btn-warmup-no" class="btn-3d btn-3d-secondary" style="flex: 1; padding: 10px;">直接挑戰</button>
+            <div class="calendar-grid">
+                <div class="calendar-day-header">日</div><div class="calendar-day-header">一</div><div class="calendar-day-header">二</div><div class="calendar-day-header">三</div><div class="calendar-day-header">四</div><div class="calendar-day-header">五</div><div class="calendar-day-header">六</div>
+                <div id="calendar-days-container" style="display: contents;"></div>
             </div>
         </div>
     </div>
 
-    <!-- 🎓 5. 切換程度 Modal -->
-    <div id="modal-select-initial-level" class="custom-modal hidden">
+    <!-- 登出確認 Modal -->
+    <div id="modal-logout-confirm" class="custom-modal hidden">
         <div class="custom-modal-card">
-            <div class="close-icon-circle" id="btn-close-level-modal"><i class="fa-solid fa-xmark"></i></div>
-            <h3 style="margin: 10px 0 8px 0; color: #1f2937;">選擇課程程度</h3>
-            <select id="initial-level-select" style="font-weight: bold; margin-bottom: 15px;">
-                <option value="0A">0A 入門級 A</option>
-                <option value="0B">0B 入門級 B</option>
-                <option value="1A" selected>1A 基礎級 A</option>
-                <option value="1B">1B 基礎級 B</option>
-                <option value="2A">2A 初級 A</option>
-                <option value="2B">2B 初級 B</option>
-                <option value="3A">3A 中級 A</option>
-                <option value="3B">3B 中級 B</option>
-                <option value="4A">4A 高級 A</option>
-                <option value="4B">4B 高級 B</option>
-            </select>
-            <button id="btn-confirm-initial-level" class="btn-3d btn-3d-primary" style="width: 100%; padding: 10px;">確定切換</button>
+            <h3 style="margin: 0 0 10px 0; color: #1f2937;">確定要登出嗎？</h3>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button id="btn-logout-yes" class="btn-3d" style="flex: 1; padding: 10px; background: var(--duo-red); color: white; box-shadow: 0 4px 0 var(--duo-red-shadow);">登出</button>
+                <button id="btn-logout-no" class="btn-3d btn-3d-secondary" style="flex: 1; padding: 10px;">取消</button>
+            </div>
         </div>
     </div>
 
-    <!-- 🎮 主應用畫面 -->
-    <div class="app-container hidden" id="main-app">
+    <!-- 主應用容器 -->
+    <div class="app-container" id="main-app">
+        
+        <!-- 首頁頂端資訊列 -->
         <div class="user-meta-bar">
             <div class="user-meta-item" id="btn-profile-trigger">
                 <i class="fa-solid fa-user" style="color: var(--duo-blue); font-size: 1.05rem;"></i>
-                <span id="lbl-username">使用者</span>
+                <span id="lbl-username">wei</span>
             </div>
 
-            <div class="user-meta-item">
+            <!-- 連續登入天數 (點擊開啟打卡統計) -->
+            <div class="user-meta-item" id="btn-streak-trigger">
                 <i class="fa-solid fa-fire" style="color: var(--duo-fire-red); font-size: 1.05rem;"></i>
-                <span id="lbl-login-days">1</span> 天
+                <span id="lbl-login-days">2</span> 天
             </div>
 
             <div class="user-meta-item">
@@ -245,314 +211,115 @@
             </div>
         </div>
 
-        <!-- 關卡地圖 -->
+        <!-- 地圖 View -->
         <div id="map-view" class="map-container">
-            <div id="units-map-list" style="width: 100%; display: flex; flex-direction: column; gap: 16px;"></div>
-        </div>
-
-        <!-- 遊戲視圖 -->
-        <div id="game-view" class="hidden map-container" style="padding: 10px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px;">
+            <!-- 快捷按鈕區 (恢復排行榜與我的帳號) -->
+            <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
                 <button id="btn-back-to-map" class="btn-3d btn-3d-secondary" style="padding: 6px 14px;">
                     <i class="fa-solid fa-arrow-left"></i> 返回地圖
                 </button>
-                <h3 id="game-title" style="margin: 0; font-size: 0.95rem; color: #1f2937;">挑戰進行中</h3>
+                <div style="display: flex; gap: 8px;">
+                    <button id="btn-map-leaderboard" class="btn-3d btn-3d-secondary" style="padding: 6px 14px;">
+                        <i class="fa-solid fa-trophy" style="color: var(--duo-gold);"></i> 排行榜
+                    </button>
+                    <button id="btn-map-my-account" class="btn-3d btn-3d-primary" style="padding: 6px 14px;">
+                        <i class="fa-solid fa-id-card"></i> 我的帳號
+                    </button>
+                </div>
             </div>
-            <div id="activity-player-content" style="width:100%; height: 82vh; border-radius: 16px; overflow: hidden; border: 2px solid #e5e7eb;"></div>
+
+            <div id="units-map-list" style="width: 100%;"></div>
+        </div>
+
+        <!-- 視圖 2：排行榜與 Profile 會員詳細資料頁 -->
+        <div id="profile-view" class="hidden" style="padding: 15px; width: 100%; box-sizing: border-box;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <button id="btn-profile-back-map" class="btn-3d btn-3d-secondary" style="padding: 6px 14px;">
+                    <i class="fa-solid fa-arrow-left"></i> 返回地圖
+                </button>
+
+                <div style="display: flex; gap: 6px;">
+                    <button class="nav-tab-btn active" id="btn-view-leaderboard">
+                        <i class="fa-solid fa-trophy"></i> 排行榜
+                    </button>
+                    <button class="nav-tab-btn" id="btn-view-profile">
+                        <i class="fa-solid fa-id-card"></i> 我的帳號
+                    </button>
+                </div>
+            </div>
+
+            <!-- 分頁 A：學習排行榜 (已恢復) -->
+            <div id="sub-page-leaderboard" class="unit-card">
+                <h3 style="margin-top:0; color: #1f2937; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px;">
+                    <i class="fa-solid fa-trophy" style="color: var(--duo-gold);"></i> 學習排行榜
+                </h3>
+                
+                <div style="display: flex; gap: 8px; margin-bottom: 12px; background: #f3f4f6; padding: 6px; border-radius: 14px;">
+                    <button class="tab-btn active" id="tab-leaderboard-friends">好友榜</button>
+                    <button class="tab-btn" id="tab-leaderboard-global">全球總榜</button>
+                </div>
+
+                <div id="content-rank-friends" class="rank-card-box">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+                        <span style="font-weight:bold; color:#374151;">我的好友列表</span>
+                        <button class="btn-3d btn-3d-primary" style="padding: 6px 12px; font-size: 0.8rem !important;">
+                            <i class="fa-solid fa-user-plus"></i> 新增好友
+                        </button>
+                    </div>
+                    <div id="friends-list-container" style="text-align:center; padding: 20px 0; color: #9ca3af; font-size: 0.9rem;">
+                        目前還沒有好友，快去新增吧！
+                    </div>
+                </div>
+
+                <div id="content-rank-global" class="rank-card-box hidden" style="text-align: center; padding: 20px 0;">
+                    <p style="font-size: 0.9rem; color: #6b7280; margin: 0;">🏆 全球排行榜載入中...</p>
+                </div>
+            </div>
+
+            <!-- 分頁 B：Profile 會員資料與已開通課程 (已恢復) -->
+            <div id="sub-page-profile" class="unit-card hidden">
+                <div style="text-align: center; border-bottom: 2px solid #f3f4f6; padding-bottom: 15px;">
+                    <img id="profile-user-avatar" src="https://avatar.iran.liara.run/public/boy?username=wei" class="profile-avatar-large" alt="User Avatar">
+                    <h3 style="margin: 0; color: #1f2937;"><span id="profile-nickname">wei</span></h3>
+                    <p style="font-size: 0.82rem; color: #6b7280; margin: 4px 0 0 0;" id="profile-email">bleach7981@gmail.com</p>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
+                    <!-- 已開通課程與到期日列表 (已恢復) -->
+                    <div>
+                        <span style="font-size: 0.88rem; font-weight: bold; color: #374151; display: block; margin-bottom: 8px;">已開通課程與到期日：</span>
+                        <div id="profile-memberships-list" style="display:flex; flex-direction:column; gap:8px;">
+                            <!-- JS 自動繪製開通膠囊 -->
+                        </div>
+                    </div>
+
+                    <hr style="border: none; border-top: 1px dashed #e5e7eb; margin: 4px 0;">
+
+                    <div style="display:flex; justify-content: space-between; font-size: 0.9rem;">
+                        <span style="color: #6b7280;">剩餘能量：</span>
+                        <span style="color: var(--duo-blue); font-weight: bold;"><i class="fa-solid fa-bolt-lightning"></i> <span id="profile-energy">100</span></span>
+                    </div>
+                    <div style="display:flex; justify-content: space-between; font-size: 0.9rem;">
+                        <span style="color: #6b7280;">累積經驗 (XP)：</span>
+                        <span style="color: var(--duo-gold); font-weight: bold;"><i class="fa-solid fa-star"></i> <span id="profile-xp">0</span></span>
+                    </div>
+                    <div style="display:flex; justify-content: space-between; font-size: 0.9rem;">
+                        <span style="color: #6b7280;">連續簽到：</span>
+                        <span style="color: var(--duo-fire-red); font-weight: bold;"><i class="fa-solid fa-fire"></i> <span id="profile-streak">2</span> 天</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 25px;">
+                    <button id="btn-trigger-logout" class="btn-3d" style="width: 100%; padding: 12px; background: var(--duo-red); color: white; box-shadow: 0 4px 0 var(--duo-red-shadow);">
+                        <i class="fa-solid fa-right-from-bracket"></i> 登出系統
+                    </button>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <script>
-        const SHEETBEST_API_URL = "https://api.sheetbest.com/sheets/6609511a-f588-4e4f-bd2b-ed551cab8770";
-        const PASS_SCORE = 80;
-
-        // 🎯 1A 程度 1~26 個單元動態生成
-        const units1A = [];
-        for (let i = 1; i <= 26; i++) {
-            const numStr = i < 10 ? '0' + i : i;
-            units1A.push({
-                unitNum: i,
-                title: `第 ${i} 單元：句子綜合挑戰`,
-                stages: [
-                    { name: `${i}-1 跟讀`, code: `11-${i}-1 句子跟讀挑戰`, icon: 'fa-microphone', link: `https://yoonakorean.github.io/11${numStr}01SS/`, reqUnlock: null },
-                    { name: `${i}-1 填空`, code: `11-${i}-1 句子填空挑戰`, icon: 'fa-pen-to-square', link: `https://yoonakorean.github.io/11${numStr}01SF/`, reqUnlock: null },
-                    { name: `${i}-1 聽打`, code: `11-${i}-1 句子聽打挑戰`, icon: 'fa-keyboard', link: `https://yoonakorean.github.io/11${numStr}01ST/`, reqUnlock: `11-${i}-1 句子填空挑戰` }
-                ]
-            });
-        }
-
-        const coursesConfig = {
-            "0A": [], "0B": [], "1A": units1A, "1B": [],
-            "2A": [], "2B": [], "3A": [], "3B": [],
-            "4A": [], "4B": []
-        };
-
-        let currentSelectedStage = null;
-        let cachedUserScores = {};
-        let isAuthRegisterMode = false;
-
-        function getTargetName() {
-            const savedNickname = localStorage.getItem('sheet_target_nickname');
-            if (savedNickname && savedNickname.trim()) return savedNickname.trim();
-            const currentUser = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null;
-            if (currentUser) return currentUser.displayName || currentUser.email.split('@')[0];
-            const domName = document.getElementById('lbl-username')?.innerText;
-            return (domName && domName !== '使用者') ? domName : null;
-        }
-
-        async function fetchUserScores() {
-            try {
-                const targetName = getTargetName();
-                if (!targetName) {
-                    renderCourseMap(document.getElementById('lbl-user-level')?.innerText || "1A");
-                    return;
-                }
-
-                const searchUrl = `${SHEETBEST_API_URL}/search?nickname=${encodeURIComponent(targetName)}`;
-                const response = await fetch(searchUrl);
-                if (!response.ok) throw new Error("API 存取失敗");
-                
-                const data = await response.json();
-                cachedUserScores = {};
-
-                if (Array.isArray(data)) {
-                    data.forEach(row => {
-                        const stageCode = (row.gametitle || row.code || '').toString().trim();
-                        const score = parseInt(row.score || 0, 10) || 0;
-                        if (stageCode && (!cachedUserScores[stageCode] || score > cachedUserScores[stageCode])) {
-                            cachedUserScores[stageCode] = score;
-                        }
-                    });
-                }
-
-                renderCourseMap(document.getElementById('lbl-user-level')?.innerText || "1A");
-            } catch (error) {
-                console.error("載入成績失敗:", error);
-            }
-        }
-
-        function renderCourseMap(level = "1A") {
-            const container = document.getElementById('units-map-list');
-            if (!container) return;
-            container.innerHTML = '';
-
-            const currentCourseData = coursesConfig[level] || [];
-            if (currentCourseData.length === 0) {
-                container.innerHTML = `<div style="text-align:center; color:#9ca3af; padding:60px 0; font-weight:bold;">${level} 程度關卡籌備中，敬請期待！</div>`;
-                return;
-            }
-
-            currentCourseData.forEach(unit => {
-                const card = document.createElement('div');
-                card.className = 'unit-card';
-                card.innerHTML = `<div class="unit-header-bar"><div class="unit-header-title">${unit.title}</div><div style="font-size:0.85rem;"><i class="fa-solid fa-book"></i> 單元 11-${unit.unitNum}-1</div></div>`;
-
-                const col = document.createElement('div');
-                col.className = 'activity-column';
-
-                unit.stages.forEach(stage => {
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'activity-node-wrapper';
-
-                    const btn = document.createElement('button');
-                    btn.className = 'activity-node';
-                    const score = cachedUserScores[stage.code] || 0;
-
-                    let isLocked = false;
-                    if (stage.reqUnlock && (cachedUserScores[stage.reqUnlock] || 0) < PASS_SCORE) {
-                        isLocked = true;
-                    }
-
-                    if (isLocked) {
-                        btn.classList.add('status-locked');
-                        btn.innerHTML = `<i class="fa-solid fa-lock"></i>`;
-                        btn.onclick = () => document.getElementById('modal-locked').classList.remove('hidden');
-                    } else {
-                        if (score >= PASS_SCORE) btn.classList.add('status-completed');
-                        btn.innerHTML = `<i class="fa-solid ${stage.icon}"></i>`;
-                        btn.onclick = () => {
-                            currentSelectedStage = stage;
-                            document.getElementById('modal-warmup-ask').classList.remove('hidden');
-                        };
-                    }
-
-                    wrapper.appendChild(btn);
-                    const lbl = document.createElement('div');
-                    lbl.className = 'activity-label';
-                    lbl.innerText = stage.name;
-                    wrapper.appendChild(lbl);
-
-                    if (score > 0) {
-                        const badge = document.createElement('div');
-                        badge.className = 'score-badge';
-                        badge.innerText = `${score}分`;
-                        wrapper.appendChild(badge);
-                    }
-
-                    col.appendChild(wrapper);
-                });
-
-                card.appendChild(col);
-                container.appendChild(card);
-            });
-        }
-
-        function launchStageGame(stage, mode = 'challenge') {
-            document.getElementById('map-view').classList.add('hidden');
-            document.getElementById('game-view').classList.remove('hidden');
-            document.getElementById('game-title').innerText = stage.code + (mode === 'practice' ? ' (練習模式)' : ' (挑戰模式)');
-            
-            const baseUrl = stage.link;
-            const separator = baseUrl.includes('?') ? '&' : '?';
-            const targetUrl = `${baseUrl}${separator}mode=${encodeURIComponent(mode)}`;
-
-            document.getElementById('activity-player-content').innerHTML = `
-                <iframe src="${targetUrl}" style="width:100%; height:100%; border:none;" allow="microphone; autoplay;"></iframe>
-            `;
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedNickname = localStorage.getItem('sheet_target_nickname') || 'UWEI';
-            const nicknameInput = document.getElementById('sheet-nickname-input');
-            if (nicknameInput) nicknameInput.value = savedNickname;
-
-            document.getElementById('btn-save-nickname')?.addEventListener('click', () => {
-                const val = nicknameInput.value.trim();
-                localStorage.setItem('sheet_target_nickname', val);
-                alert(`已儲存暱稱：${val || '預設名稱'}\n正在同步成績...`);
-                fetchUserScores();
-            });
-
-            // Firebase 登入狀態監聽 (登入/註冊核心 logic)
-            if (typeof firebase !== 'undefined' && firebase.auth) {
-                firebase.auth().onAuthStateChanged((user) => {
-                    if (user) {
-                        document.getElementById('login-modal').classList.add('hidden');
-                        document.getElementById('main-app').classList.remove('hidden');
-
-                        const displayName = user.displayName || user.email.split('@')[0];
-                        document.getElementById('lbl-username').innerText = displayName;
-                        document.getElementById('profile-display-name').innerText = displayName;
-                        document.getElementById('profile-display-email').innerText = user.email;
-
-                        fetchUserScores();
-                    } else {
-                        document.getElementById('login-modal').classList.remove('hidden');
-                        document.getElementById('main-app').classList.add('hidden');
-                    }
-                });
-            } else {
-                document.getElementById('login-modal').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                fetchUserScores();
-            }
-
-            const tabLogin = document.getElementById('tab-login');
-            const tabRegister = document.getElementById('tab-register');
-            const btnAuthSubmit = document.getElementById('btn-auth-submit');
-
-            tabLogin?.addEventListener('click', () => {
-                isAuthRegisterMode = false;
-                tabLogin.classList.add('active');
-                tabRegister.classList.remove('active');
-                btnAuthSubmit.innerText = '登入';
-            });
-
-            tabRegister?.addEventListener('click', () => {
-                isAuthRegisterMode = true;
-                tabRegister.classList.add('active');
-                tabLogin.classList.remove('active');
-                btnAuthSubmit.innerText = '註冊並登入';
-            });
-
-            btnAuthSubmit?.addEventListener('click', () => {
-                const email = document.getElementById('email-input').value.trim();
-                const password = document.getElementById('password-input').value.trim();
-                const errorMsg = document.getElementById('login-error-msg');
-
-                errorMsg.classList.add('hidden');
-                if (!email || !password) {
-                    errorMsg.innerText = '請輸入 Email 與密碼';
-                    errorMsg.classList.remove('hidden');
-                    return;
-                }
-
-                if (isAuthRegisterMode) {
-                    firebase.auth().createUserWithEmailAndPassword(email, password)
-                        .catch(err => {
-                            errorMsg.innerText = err.message;
-                            errorMsg.classList.remove('hidden');
-                        });
-                } else {
-                    firebase.auth().signInWithEmailAndPassword(email, password)
-                        .catch(err => {
-                            errorMsg.innerText = '帳號或密碼錯誤';
-                            errorMsg.classList.remove('hidden');
-                        });
-                }
-            });
-
-            document.getElementById('btn-google-login')?.addEventListener('click', () => {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                firebase.auth().signInWithPopup(provider).catch(err => {
-                    const errorMsg = document.getElementById('login-error-msg');
-                    errorMsg.innerText = err.message;
-                    errorMsg.classList.remove('hidden');
-                });
-            });
-
-            document.getElementById('btn-logout')?.addEventListener('click', () => {
-                firebase.auth().signOut().then(() => {
-                    document.getElementById('modal-profile').classList.add('hidden');
-                });
-            });
-
-            document.getElementById('btn-profile-trigger')?.addEventListener('click', () => {
-                document.getElementById('modal-profile').classList.remove('hidden');
-            });
-            document.getElementById('btn-close-profile-modal')?.addEventListener('click', () => {
-                document.getElementById('modal-profile').classList.add('hidden');
-            });
-
-            document.getElementById('btn-warmup-yes')?.addEventListener('click', () => {
-                document.getElementById('modal-warmup-ask').classList.add('hidden');
-                if (currentSelectedStage) launchStageGame(currentSelectedStage, 'practice');
-            });
-
-            document.getElementById('btn-warmup-no')?.addEventListener('click', () => {
-                document.getElementById('modal-warmup-ask').classList.add('hidden');
-                if (currentSelectedStage) launchStageGame(currentSelectedStage, 'challenge');
-            });
-
-            document.getElementById('btn-close-warmup-ask')?.addEventListener('click', () => {
-                document.getElementById('modal-warmup-ask').classList.add('hidden');
-            });
-
-            document.getElementById('btn-close-locked-modal')?.addEventListener('click', () => {
-                document.getElementById('modal-locked').classList.add('hidden');
-            });
-
-            document.getElementById('btn-back-to-map')?.addEventListener('click', () => {
-                document.getElementById('game-view').classList.add('hidden');
-                document.getElementById('map-view').classList.remove('hidden');
-                document.getElementById('activity-player-content').innerHTML = '';
-            });
-
-            document.getElementById('btn-level-trigger')?.addEventListener('click', () => {
-                document.getElementById('modal-select-initial-level').classList.remove('hidden');
-            });
-
-            document.getElementById('btn-close-level-modal')?.addEventListener('click', () => {
-                document.getElementById('modal-select-initial-level').classList.add('hidden');
-            });
-
-            document.getElementById('btn-confirm-initial-level')?.addEventListener('click', () => {
-                const selectedLvl = document.getElementById('initial-level-select').value;
-                document.getElementById('lbl-user-level').innerText = selectedLvl;
-                renderCourseMap(selectedLvl);
-                document.getElementById('modal-select-initial-level').classList.add('hidden');
-            });
-        });
-    </script>
+    <script type="module" src="./src/app.js"></script>
 </body>
 </html>
